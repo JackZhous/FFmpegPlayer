@@ -1,0 +1,3 @@
+/Users/sever1/tmp/github/MyPlayer/app/.externalNativeBuild/cmake/release/x86_64/CMakeFiles/edit_cache.dir
+/Users/sever1/tmp/github/MyPlayer/app/.externalNativeBuild/cmake/release/x86_64/CMakeFiles/rebuild_cache.dir
+/Users/sever1/tmp/github/MyPlayer/app/.externalNativeBuild/cmake/release/x86_64/CMakeFiles/native-lib.dir

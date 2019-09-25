@@ -1,0 +1,38 @@
+
+{
+	"buildFiles" : [ "/Users/sever1/tmp/github/MyPlayer/app/CMakeLists.txt" ],
+	"cleanCommands" : 
+	[
+		"/Users/sever1/Library/Developer/Xamarin/android-sdk-macosx/cmake/3.6.4111459/bin/cmake --build /Users/sever1/tmp/github/MyPlayer/app/.externalNativeBuild/cmake/debug/armeabi --target clean"
+	],
+	"cppFileExtensions" : [ "cpp" ],
+	"libraries" : 
+	{
+		"native-lib-Debug-armeabi" : 
+		{
+			"abi" : "armeabi",
+			"artifactName" : "native-lib",
+			"buildCommand" : "/Users/sever1/Library/Developer/Xamarin/android-sdk-macosx/cmake/3.6.4111459/bin/cmake --build /Users/sever1/tmp/github/MyPlayer/app/.externalNativeBuild/cmake/debug/armeabi --target native-lib",
+			"buildType" : "debug",
+			"files" : 
+			[
+				
+				{
+					"flags" : "  --target=armv5te-none-linux-androideabi --gcc-toolchain=/Users/sever1/Library/Developer/Xamarin/android-ndk/android-ndk-r14b/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64 --sysroot=/Users/sever1/Library/Developer/Xamarin/android-ndk/android-ndk-r14b/platforms/android-14/arch-arm  -Dnative_lib_EXPORTS -isystem /Users/sever1/Library/Developer/Xamarin/android-ndk/android-ndk-r14b/sources/cxx-stl/gnu-libstdc++/4.9/include -isystem /Users/sever1/Library/Developer/Xamarin/android-ndk/android-ndk-r14b/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi/include -isystem /Users/sever1/Library/Developer/Xamarin/android-ndk/android-ndk-r14b/sources/cxx-stl/gnu-libstdc++/4.9/include/backward  -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -march=armv5te -mtune=xscale -msoft-float -fno-integrated-as -mthumb -Wa,--noexecstack -Wformat -Werror=format-security  -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -march=armv5te -mtune=xscale -msoft-float -fno-integrated-as -mthumb -Wa,--noexecstack -Wformat -Werror=format-security   -O0 -fno-limit-debug-info -O0 -fno-limit-debug-info  -fPIC    -c ",
+					"src" : "/Users/sever1/tmp/github/MyPlayer/app/src/main/cpp/native-lib.cpp",
+					"workingDirectory" : "/Users/sever1/tmp/github/MyPlayer/app/.externalNativeBuild/cmake/debug/armeabi"
+				}
+			],
+			"output" : "/Users/sever1/tmp/github/MyPlayer/app/build/intermediates/cmake/debug/obj/armeabi/libnative-lib.so",
+			"toolchain" : "4761364331536668898"
+		}
+	},
+	"toolchains" : 
+	{
+		"4761364331536668898" : 
+		{
+			"cCompilerExecutable" : "/Users/sever1/Library/Developer/Xamarin/android-ndk/android-ndk-r14b/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang",
+			"cppCompilerExecutable" : "/Users/sever1/Library/Developer/Xamarin/android-ndk/android-ndk-r14b/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++"
+		}
+	}
+}

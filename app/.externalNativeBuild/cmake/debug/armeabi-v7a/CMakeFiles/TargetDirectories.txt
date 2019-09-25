@@ -1,0 +1,5 @@
+/Users/sever1/tmp/github/FFmpegPlayer/app/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeFiles/edit_cache.dir
+/Users/sever1/tmp/github/FFmpegPlayer/app/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeFiles/rebuild_cache.dir
+/Users/sever1/tmp/github/FFmpegPlayer/app/.externalNativeBuild/cmake/debug/armeabi-v7a/player/CMakeFiles/edit_cache.dir
+/Users/sever1/tmp/github/FFmpegPlayer/app/.externalNativeBuild/cmake/debug/armeabi-v7a/player/CMakeFiles/rebuild_cache.dir
+/Users/sever1/tmp/github/FFmpegPlayer/app/.externalNativeBuild/cmake/debug/armeabi-v7a/player/CMakeFiles/player.dir
