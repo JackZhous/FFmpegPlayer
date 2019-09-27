@@ -41,7 +41,9 @@ public:
     JFrame* getPopFrame();             //获取弹出地址
     void push();                    //pushFrame后调用该方法让栈加1
     void pop();                     //出栈，这里为什么要这么设计？ 1. 考虑AVFrame是一副二维图形，故直接地址引用效率比较高 2. 直接返回地址给外部使用，确认外部使用完后才能往这个地址继续写入内容，否则还没使用完就覆盖会出错
-
+    JFrame* getLastFrame();
+    JFrame* getCurrentFrame();
+    JFrame* getNextFrame();
 
 private:
     int queueMax;                   //总容量

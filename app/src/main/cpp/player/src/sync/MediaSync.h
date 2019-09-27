@@ -6,12 +6,18 @@
 #define MYPLAYER_MEDIASYNC_H
 
 #include <common/PlayerStatus.h>
+#include <decoder/VideoDecoder.h>
+#include <decoder/AudioDecoder.h>
+#include <device/VideoDevice.h>
 #include "Thread.h"
 #include "MediaClock.h"
+extern "C"{
+#include <libswscale/swscale.h>
+};
 
 class MediaSync : public Runnable{
     public:
-        MediaSync();
+        MediaSync(PlayerStatus* status);
         ~MediaSync();
 
         void updateExternalClock(double pts);
@@ -20,6 +26,8 @@ class MediaSync : public Runnable{
 
         void stop();
 
+        void start(AudioDecoder* audioDecoder, VideoDecoder* videoDecoder);
+
         void updateAudioColock(double pts, double time);
 
         //获取音频时钟漂移
@@ -27,18 +35,57 @@ class MediaSync : public Runnable{
 
         double getMasterClock();
 
+        MediaClock* getAudioClock();
 
-private:
-    Mutex mMutex;
-    Condition mCond;
-    bool abort;
+        MediaClock* getVideoClock();
 
-    MediaClock *audioClock;
-    MediaClock *videoClock;
-    MediaClock *extClock;
+        MediaClock* getExtClock();
+
+        void setVideoDevice(VideoDevice* device);
+
+        void setMaxFrameDuration(double time);
+
+        void refreshVideoTImer();
+
+        void refreshVideo(double *remain_time);
+
+        void checkExternalClockSpeed();
+
+        void renderVideo();
 
 
-    PlayerStatus* playerStatus;
+        private:
+            //计算vp的显示时长
+            double calculateDuration(JFrame *vp, JFrame *nextvp);
+
+            double calculateDelay(double delay);
+
+
+        private:
+            Mutex mMutex;
+            Condition mCond;
+            bool abort;
+            bool exit;
+
+            MediaClock *audioClock;
+            MediaClock *videoClock;
+            MediaClock *extClock;
+            PlayerStatus* playerStatus;
+
+            Thread* syncThread;
+            VideoDecoder* vDecoder;
+            AudioDecoder* aDecoder;
+
+            int forceFresh;             //强制刷新
+            double maxFrameDuration;    //最大帧演示
+            int frameTimerRefresh;      //刷新时钟
+            double frameTimer;          //视频时钟
+
+            VideoDevice* videoDevice;
+
+            AVFrame* pFrameARGB;
+            uint8_t* mBuffer;
+            SwsContext* swsContext;
 };
 
 #endif //MYPLAYER_MEDIASYNC_H

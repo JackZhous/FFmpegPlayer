@@ -39,7 +39,7 @@ extern "C"{
       double audio_diff_avg_coef;
       double audio_diff_threshold;
       int audio_diff_avg_count;
-      int audio_hw_buf_size;
+      int audio_hw_buf_size;        //记录GLES整个缓冲区的长度
       uint8_t *outputBuffer;        //输出缓冲区大小
       uint8_t *resampleBuffer;      //重采样大小
       short *soundTouchBUffer;      //SoundTouch缓冲

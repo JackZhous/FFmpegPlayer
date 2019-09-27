@@ -27,7 +27,7 @@ typedef struct {
     void* userData;             //音频上下文
 }AudioDeviceSpec;
 
-class AudioDevice : public Runnable{
+class AudioDevice : public Runnable {
     public:
         AudioDevice();
         ~AudioDevice();

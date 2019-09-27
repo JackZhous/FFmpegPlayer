@@ -180,7 +180,7 @@ int Player::prepareFFmpeg() {
     }
 
     playerStatus->isLiveStream = isLiveStream(pFormatCtx);
-
+    sync->setMaxFrameDuration(pFormatCtx->iformat->flags & AVFMT_TS_DISCONT ? 10.0 : 3600.0);
     return PLAYER_OK;
 }
 
@@ -299,6 +299,18 @@ void Player::run() {
         }
     }
 
+    if(vDecoder){
+        if(playerStatus->syncType == AV_SYNC_AUDIO){
+            vDecoder->setMasterClock(sync->getAudioClock());
+        } else if(playerStatus->syncType == AVMEDIA_TYPE_VIDEO){
+            vDecoder->setMasterClock(sync->getVideoClock());
+        } else{
+            vDecoder->setMasterClock(sync->getExtClock());
+        }
+
+    }
+
+
     if(sync){
         Thread* syncThread = new Thread(sync);
         syncThread->start();
@@ -318,7 +330,7 @@ void Player::run() {
             if(playerStatus->pauseRequest){
                 av_read_pause(pFormatCtx);
             } else{
-                av_read_pause(pFormatCtx);
+                av_read_play(pFormatCtx);
             }
             lastPlayerStatus = playerStatus->pauseRequest;
         }
@@ -518,6 +530,5 @@ int Player::openAudioDevice(int64_t wanted_channel_layout, int wanted_nb_channel
         audioResampler = new AudioResampler(playerStatus, aDecoder, sync);
     }
     audioResampler->setResampleParams(&spec, wanted_channel_layout);
-
     return spec.size;
 }

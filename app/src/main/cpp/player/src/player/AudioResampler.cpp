@@ -70,7 +70,7 @@ void AudioResampler::pcmQueueCallback(uint8_t *stream, int len) {
         memset(stream, 0, len);
         return;
     }
-
+    //bufferIndex数据开始的位置（会变）  bufferSize结束的位置（不变）  outBuffer读取的位置（会变）
     audioState->audio_callback_time = av_gettime_relative();
     while (len > 0){
         if(audioState->bufferIndex >= audioState->buffersize){
@@ -98,9 +98,12 @@ void AudioResampler::pcmQueueCallback(uint8_t *stream, int len) {
         stream += length;
         audioState->bufferIndex += length;
     }
+
+    //还没有写完进去的数据长度
     audioState->writeBufferSize = audioState->buffersize - audioState->bufferIndex;
 
     if(!isnan(audioState->audioClock) && sync){
+        //乘2是因为有两个通道 audioClock在audioFrameResample更新了播放解码后数据的时间，这里要减去这些数据，还没有播放
         sync->updateAudioColock(audioState->audioClock - (double)(2 * audioState->audio_hw_buf_size
         + audioState->writeBufferSize) / audioState->audioParamsTarget.bytes_per_sec,
         audioState->audio_callback_time / 1000000.0);
@@ -171,7 +174,8 @@ int AudioResampler::audioFrameResample() {
         if(audioState->swrCtx){
             const uint8_t **in = (const uint8_t **)frame->extended_data;
             uint8_t **out = &audioState->resampleBuffer;
-            int out_count = wanted_nb_samples * audioState->audioParamsTarget.freq / frame->sample_rate + 256;
+//            int out_count = wanted_nb_samples * audioState->audioParamsTarget.freq / frame->sample_rate + 256;
+            int out_count = av_rescale_rnd(swr_get_delay(audioState->swrCtx, frame->sample_rate) + frame->nb_samples, audioState->audioParamsTarget.freq, frame->sample_rate, AV_ROUND_UP);
             int out_size = av_samples_get_buffer_size(NULL, audioState->audioParamsTarget.channels, out_count, audioState->audioParamsTarget.fmt, 0);
             int len2;
             if(out_size < 0){
@@ -214,6 +218,7 @@ int AudioResampler::audioFrameResample() {
 
     //利用pts更新时钟
     if(frame->pts != AV_NOPTS_VALUE){
+        //解码时间戳加这么 nb_samples个采样点的时间
         audioState->audioClock = frame->pts * av_q2d((AVRational){1, frame->sample_rate}) +
                 (double)frame->nb_samples / frame->sample_rate;
     } else{

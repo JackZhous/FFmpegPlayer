@@ -44,6 +44,25 @@ int FrameQueue::getFrameLen() const {
     return size;
 }
 
+JFrame* FrameQueue::getCurrentFrame() {
+    return &frame[outputIndex & queueMax];
+}
+
+
+/**
+ * 有待商榷，因为第一次调用时可能出错
+ */
+JFrame* FrameQueue::getLastFrame() {
+    int i = outputIndex - 1;
+    if(i < 0){
+        i = queueMax - 1;
+    }
+    return &frame[i];
+}
+
+JFrame* FrameQueue::getNextFrame() {
+    return &frame[(outputIndex + 1) % queueMax];
+}
 
 void FrameQueue::setAbort(short abort) {
     this->abort = abort;
@@ -52,11 +71,10 @@ void FrameQueue::setAbort(short abort) {
 JFrame* FrameQueue::getpushFrame() {
     mMutex.lock();
     JFrame* pFrame;
-    while (size > queueMax){
+    while (size > queueMax && !abort){
         mCond.wait(&mMutex);
     }
     pFrame = &frame[inputIndex % queueMax];
-    inputIndex++;
     mCond.signal();
     mMutex.unlock();
 
@@ -66,6 +84,7 @@ JFrame* FrameQueue::getpushFrame() {
 void FrameQueue::push() {
     mMutex.lock();
     size++;
+    inputIndex++;
     mCond.signal();
     mMutex.unlock();
 }
@@ -73,11 +92,8 @@ void FrameQueue::push() {
 JFrame* FrameQueue::getPopFrame() {
     mMutex.lock();
     JFrame* pFrame;
-    while (size <= 0){
-        mCond.wait(&mMutex);
-    }
+
     pFrame = &frame[outputIndex % queueMax];
-    outputIndex++;
     mCond.signal();
     mMutex.unlock();
 
@@ -86,7 +102,13 @@ JFrame* FrameQueue::getPopFrame() {
 
 void FrameQueue::pop() {
     mMutex.lock();
+
+    while (size <= 0 && !abort){
+        mCond.wait(&mMutex);
+    }
+
     size--;
+    outputIndex++;
     mCond.signal();
     mMutex.unlock();
 }
