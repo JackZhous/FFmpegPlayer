@@ -28,6 +28,7 @@ typedef struct {
     AVSubtitle sub;
     int format;
     int upload;
+    bool used;
 }JFrame;
 
 class FrameQueue{
@@ -44,6 +45,8 @@ public:
     JFrame* getLastFrame();
     JFrame* getCurrentFrame();
     JFrame* getNextFrame();
+    void unrefFrame(JFrame* frame);     //释放frame
+
 
 private:
     int queueMax;                   //总容量

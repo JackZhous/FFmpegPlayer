@@ -85,6 +85,9 @@ void FrameQueue::push() {
     mMutex.lock();
     size++;
     inputIndex++;
+    if(inputIndex >= queueMax){
+        inputIndex = inputIndex % queueMax;
+    }
     mCond.signal();
     mMutex.unlock();
 }
@@ -102,13 +105,26 @@ JFrame* FrameQueue::getPopFrame() {
 
 void FrameQueue::pop() {
     mMutex.lock();
-
+    unrefFrame(&frame[outputIndex & queueMax]);
     while (size <= 0 && !abort){
         mCond.wait(&mMutex);
     }
-
     size--;
     outputIndex++;
+    if(size < 0){
+        size = 0;
+    }
+    if(outputIndex >= queueMax){
+        outputIndex = outputIndex % queueMax;
+    }
     mCond.signal();
     mMutex.unlock();
+}
+
+
+void FrameQueue::unrefFrame(JFrame *frame) {
+    if(frame && frame->used){
+        av_frame_unref(frame->frame);
+        avsubtitle_free(&frame->sub)
+    }
 }

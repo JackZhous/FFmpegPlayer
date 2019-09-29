@@ -163,3 +163,8 @@ void VideoDecoder::setMasterClock(MediaClock* clock) {
     AutoMutex lock(mMutex);
     this->masterClock = clock;
 }
+
+int VideoDecoder::getRorate() {
+    AutoMutex lock(mMutex);
+    return mRorate;
+}

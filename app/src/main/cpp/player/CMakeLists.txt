@@ -44,6 +44,7 @@ add_library(player
         src/render/InputRenderNode.cpp
         src/render/CoordinateUtils.cpp
         src/player/AudioResampler.cpp
+        src/render/GLInputRGBAFilter.cpp
         )
 
 

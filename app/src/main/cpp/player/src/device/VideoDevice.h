@@ -27,7 +27,7 @@ class VideoDevice{
 
         void terminate(bool flag);
 
-        void onInitTexture(int width, int height, TextureFormat format, BlendMode blendMode, int rotate);
+        void onInitTexture(int width, int height, TextureFormat format, BlendMode blendMode, int rotate = 0);
 
         int onUpdateYUV(uint8_t *yData, int yPitch, uint8_t *uData, int uPitch, uint8_t *vData, int vPitch);
 

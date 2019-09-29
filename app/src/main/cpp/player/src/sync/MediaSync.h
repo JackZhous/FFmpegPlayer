@@ -13,6 +13,7 @@
 #include "MediaClock.h"
 extern "C"{
 #include <libswscale/swscale.h>
+#include <libavutil/imgutils.h>
 };
 
 class MediaSync : public Runnable{

@@ -19,6 +19,7 @@ class VideoDecoder : public MediaDecoder{
         int getFrameSize();
         FrameQueue* getFrameQueue();
         void setMasterClock(MediaClock* clock);
+        int getRorate();
 
     private:
         void decode();
@@ -27,6 +28,7 @@ class VideoDecoder : public MediaDecoder{
         FrameQueue* frameQueue;
         MediaClock* masterClock;
         AVFormatContext* pForamtCtx;
+        int mRorate;
 };
 
 #endif //MYPLAYER_VIDEODECODER_H

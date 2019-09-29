@@ -178,7 +178,69 @@ void MediaSync::renderVideo() {
         JFrame* vp = vDecoder->getFrameQueue()->getLastFrame();
         int ret = 0;
         if(!vp->upload){
+            switch (vp->frame->format){
+                case AV_PIX_FMT_YUV420P:
+                case AV_PIX_FMT_YUVJ420P:
+                    videoDevice->onInitTexture(vp->frame->width, vp->frame->height, FMT_YUV420P, BLEND_NONE);
+                    //linesize即平面长度 YUV三个通过平面存储
+                    if(vp->frame->linesize[0] < 0 || vp->frame->linesize[1] < 0 || vp->frame->linesize[2] < 0){
+                        LOGE("negative linesize is not supported for YUV");
+                        return;
+                    }
+                    ret = videoDevice->onUpdateYUV(vp->frame->data[0], vp->frame->linesize[0],
+                                                    vp->frame->data[1], vp->frame->linesize[1],
+                                                    vp->frame->data[2], vp->frame->linesize[2]);
+                    if(ret < 0){
+                        LOGE("update yuv failed");
+                        return;
+                    }
 
+                    break;
+
+
+                case AV_PIX_FMT_RGBA:
+                    videoDevice->onInitTexture(vp->frame->width, vp->frame->height, FMT_ARGB, BLEND_NONE);
+                    ret = videoDevice->onUpdateARGB(vp->frame->data[0], vp->frame->linesize[0]);
+                    if(ret < 0){
+                        LOGE("update rgba failed");
+                        return;
+                    }
+                    break;
+
+
+                //其他格式转码成RGBA渲染
+                default:
+                    swsContext = sws_getCachedContext(swsContext, vp->frame->width, vp->frame->height,
+                                                      (AVPixelFormat)vp->frame->format,
+                                                       vp->frame->width, vp->frame->height,
+                                                        AV_PIX_FMT_BGRA, SWS_BICUBIC, NULL, NULL, NULL);
+                    if(!mBuffer){
+                        int numBytes = av_image_get_buffer_size(AV_PIX_FMT_BGRA, vp->frame->width,
+                                                            vp->frame->height, 1);
+                        mBuffer = (uint8_t*)av_malloc(numBytes * sizeof(uint8_t));
+                        pFrameARGB = av_frame_alloc();
+                        av_image_fill_arrays(pFrameARGB->data, pFrameARGB->linesize, mBuffer,
+                                            AV_PIX_FMT_BGRA, vp->frame->width, vp->frame->height, 1);
+                    }
+                    if(swsContext){
+                        sws_scale(swsContext, (uint8_t const * const *)vp->frame->data, vp->frame->linesize, 0, vp->frame->height,
+                                pFrameARGB->data, pFrameARGB->linesize);
+                    }
+
+                    videoDevice->onInitTexture(vp->frame->width, vp->frame->height, FMT_ARGB, BLEND_NONE, vDecoder->getRorate());
+                    ret = videoDevice->onUpdateARGB(pFrameARGB->data[0], pFrameARGB->linesize[0]);
+                    if(ret < 0){
+                        LOGE("update sws rgba failed");
+                        return;
+                    }
+                    break;
+            }
+
+            vp->upload = 1;
+        }
+
+        if(videoDevice){
+            videoDevice->onRequestRender(vp->frame->linesize[0] < 0);
         }
     mMutex.unlock();
 }
