@@ -7,7 +7,9 @@
 #define OPENSLES_BUFFERS 4 // 最大缓冲区数量
 #define OPENSLES_BUFLEN  10 // 缓冲区长度(毫秒)
 
-AudioDevice::AudioDevice() {}
+AudioDevice::AudioDevice() {
+    slObject = NULL;
+}
 
 AudioDevice::~AudioDevice() {}
 
@@ -159,7 +161,7 @@ int AudioDevice::open(AudioDeviceSpec *input, AudioDeviceSpec *output) {
     memset(buffer, 0, buffer_capacity);
     for(int i = 0; i < OPENSLES_BUFFERS; i++){
         result = (*slBufferQueueItf)->Enqueue(slBufferQueueItf, buffer + i * bytes_per_buffer, bytes_per_buffer);
-        if(!result){
+        if(result != SL_RESULT_SUCCESS){
             LOGE("%s: slBufferQueueItf->Enqueue(000...) failed", __func__);
         }
     }
@@ -246,10 +248,11 @@ void AudioDevice::run() {
         mMutex.lock();
         if(!abortRequest && (pauseRequest || slState.count >= OPENSLES_BUFFERS)){
             while (!abortRequest && (pauseRequest || slState.count >= OPENSLES_BUFFERS)){
+                LOGI("sl es 音频缓冲区判断中");
                 if(!pauseRequest){
                     (*slPlayItf)->SetPlayState(slPlayItf, SL_PLAYSTATE_PLAYING);
                 }
-                mCond.waitRelative(&mMutex, 10 * 1000000);
+                mCond.waitRelative(mMutex, 10 * 1000000);
                 slRet = (*slBufferQueueItf)->GetState(slBufferQueueItf, &slState);
                 if(slRet != SL_RESULT_SUCCESS){
                     LOGE("%s: slBufferQueueItf->GetState failed", __func__);
@@ -265,7 +268,7 @@ void AudioDevice::run() {
                 (*slPlayItf)->SetPlayState(slPlayItf, SL_PLAYSTATE_PLAYING);
             }
         }
-
+        LOGI("sl es 音频缓冲区需要填充数据了");
         if(flushRequest){
             (*slBufferQueueItf)->Clear(slBufferQueueItf);
             flushRequest = 0;
@@ -275,6 +278,7 @@ void AudioDevice::run() {
         //缓冲区数据填充
         mMutex.lock();
         if(audioDeviceSpec.callback != NULL){
+            LOGI("sl es 音频开始回调数据");
             nextBuffer = buffer + nextBufferIndex * bytes_per_buffer;
             nextBufferIndex = (nextBufferIndex+1) % OPENSLES_BUFFERS;
             audioDeviceSpec.callback(audioDeviceSpec.userData, nextBuffer, bytes_per_buffer);
@@ -378,7 +382,7 @@ SLmillibel AudioDevice::getAmplificationLevel(float volumeLevel) {
      * lround四舍五入取整 返回long int型
      *
      */
-    SLmillibel mb = lround(20f * log10f(volumeLevel));
+    SLmillibel mb = lround(20.0f * log10f(volumeLevel));
     if(mb < SL_MILLIBEL_MIN){
         mb = SL_MILLIBEL_MIN;
     }

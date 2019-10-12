@@ -80,7 +80,7 @@ class MediaSync : public Runnable{
             int forceFresh;             //强制刷新
             double maxFrameDuration;    //最大帧演示
             int frameTimerRefresh;      //刷新时钟
-            double frameTimer;          //视频时钟
+            double frameTimer;          //视频时钟,上一帧图像显示的时间戳
 
             VideoDevice* videoDevice;
 

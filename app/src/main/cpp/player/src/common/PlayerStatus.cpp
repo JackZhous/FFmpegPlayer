@@ -24,7 +24,7 @@ void PlayerStatus::setVideoUrl(char *url) {
 }
 
 void PlayerStatus::reset() {
-    url = NULL;
+//    url = NULL;
     vedioPath = NULL;
     pauseRequest = 0;
     abortRequest = 0;

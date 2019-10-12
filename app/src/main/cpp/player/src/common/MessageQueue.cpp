@@ -31,7 +31,7 @@ int MessageQueue::getMessage(JNIMessage *msg, MessageQueue::TYPE_READ block) {
     for(;;){
         if(first == NULL){
             if(block == BLOCK){
-                mCond.wait(&mMutex);      //等待100ms
+                mCond.wait(mMutex);      //等待100ms
                 continue;
             } else{
                 return -1;

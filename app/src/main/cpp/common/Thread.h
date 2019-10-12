@@ -149,7 +149,7 @@ inline void Thread::start() {
 
     mutex.lock();
     while (!mRunning){
-        condition.wait(&mutex);
+        condition.wait(mutex);
     }
     mutex.unlock();
 }

@@ -10,12 +10,13 @@ Player::Player() {
     av_register_all();
     avformat_network_init();
     playerStatus = new PlayerStatus();
-    sync = new MediaSync();
+    sync = NULL;
     aDecoder = NULL;
     vDecoder = NULL;
     pFormatCtx = NULL;
-    vDevice = NULL;
+    audioResampler = NULL;
     aDevice = new AudioDevice();
+    vDevice = new VideoDevice();
     eof = 0;
 }
 
@@ -26,6 +27,10 @@ Player::~Player() {
     aDevice = NULL;
     reset();
     avformat_network_deinit();
+}
+
+void Player::init() {
+    sync = new MediaSync(playerStatus);
 }
 
 void Player::reset() {
@@ -53,6 +58,11 @@ void Player::reset() {
     }
     if(playerStatus != NULL){
         playerStatus->reset();
+    }
+
+    if(audioResampler != NULL){
+        delete audioResampler;
+        audioResampler = NULL;
     }
 
     if(vDevice){
@@ -89,8 +99,9 @@ void Player::setSurface(ANativeWindow *window) {
         delete vDevice;
         vDevice = NULL;
     }
-
-    vDevice = new VideoDevice();
+    if(vDevice){
+        vDevice = new VideoDevice();
+    }
     vDevice->surfaceCreate(window);
 }
 
@@ -260,6 +271,7 @@ int Player::prepareDecoder(int streamIndex) {
 void Player::run() {
     //1. 初始化ffmpeg库
     reset();
+    init();
     int ret = prepareFFmpeg();
     if(ret <= PLAYER_FAILED){
         playerStatus->queue->addMessage(FFMPEG_INIT_FAILED, "ffmpeg init failed");
@@ -275,9 +287,9 @@ void Player::run() {
 
     if(vDecoder != NULL && aDecoder != NULL){
         Thread* vThread = new Thread(vDecoder);
-        Thread* aThread = new Thread(aDecoder);
+//        Thread* aThread = new Thread(aDecoder);
         vThread->start();
-        aThread->start();
+//        aThread->start();
         playerStatus->queue->addMessage(START_VIDEO_DECODER, "start video decoder thread");
         playerStatus->queue->addMessage(START_AUDIO_DECODER, "start audio decoder thread");
     }
@@ -310,12 +322,11 @@ void Player::run() {
 
     }
 
-
     if(sync){
-        Thread* syncThread = new Thread(sync);
-        syncThread->start();
+        sync->start(aDecoder, vDecoder);
     }
 
+    LOGI("prepare ffmpeg!");
     AVPacket packet;
     //循环读取packet
     for (;;) {
@@ -438,7 +449,7 @@ void Player::seekVideo(float times) {
     }
     mMutex.lock();
     while (playerStatus->seekRequest){
-        mCond.wait(&mMutex);
+        mCond.wait(mMutex);
     }
     mMutex.unlock();
     int64_t start_time = pFormatCtx->start_time < 0 ? 0 : pFormatCtx->start_time;

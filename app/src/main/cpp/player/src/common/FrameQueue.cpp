@@ -72,7 +72,7 @@ JFrame* FrameQueue::getpushFrame() {
     mMutex.lock();
     JFrame* pFrame;
     while (size > queueMax && !abort){
-        mCond.wait(&mMutex);
+        mCond.wait(mMutex);
     }
     pFrame = &frame[inputIndex % queueMax];
     mCond.signal();
@@ -107,7 +107,7 @@ void FrameQueue::pop() {
     mMutex.lock();
     unrefFrame(&frame[outputIndex & queueMax]);
     while (size <= 0 && !abort){
-        mCond.wait(&mMutex);
+        mCond.wait(mMutex);
     }
     size--;
     outputIndex++;
@@ -125,6 +125,6 @@ void FrameQueue::pop() {
 void FrameQueue::unrefFrame(JFrame *frame) {
     if(frame && frame->used){
         av_frame_unref(frame->frame);
-        avsubtitle_free(&frame->sub)
+        avsubtitle_free(&frame->sub);
     }
 }

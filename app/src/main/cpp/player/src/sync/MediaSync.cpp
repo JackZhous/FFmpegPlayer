@@ -8,7 +8,7 @@
 
 MediaSync::MediaSync(PlayerStatus* status) {
     this->playerStatus = status;
-    abort = true;
+    abort = false;
     exit = true;
     audioClock = new MediaClock();
     videoClock = new MediaClock();
@@ -93,7 +93,7 @@ void MediaSync::refreshVideo(double *remain_time) {
 
             lastFrame = vDecoder->getFrameQueue()->getLastFrame();
             currentFrame = vDecoder->getFrameQueue()->getCurrentFrame();
-            //判断是否需要强制更新帧时间
+            // 判断是否需要强制更新帧的时间,定位视频触发
             if(frameTimerRefresh){
                 frameTimer = av_gettime_relative() / 1000000.0;
                 frameTimerRefresh = 0;
@@ -149,6 +149,7 @@ void MediaSync::refreshVideo(double *remain_time) {
                 //如果系统时钟比下一帧播放时间都还大，就没必要显示了
                 if(time > frameTimer + duration){
                     vDecoder->getFrameQueue()->pop();
+                    continue;
                 }
             }
             //下一帧
@@ -179,6 +180,9 @@ void MediaSync::renderVideo() {
         int ret = 0;
         if(!vp->upload){
             switch (vp->frame->format){
+                // YUV420P 和 YUVJ420P 除了色彩空间不一样之外，其他的没什么区别
+                // YUV420P表示的范围是 16 ~ 235，而YUVJ420P表示的范围是0 ~ 255
+                // 这里做了兼容处理，后续可以优化，shader已经过验证
                 case AV_PIX_FMT_YUV420P:
                 case AV_PIX_FMT_YUVJ420P:
                     videoDevice->onInitTexture(vp->frame->width, vp->frame->height, FMT_YUV420P, BLEND_NONE);
@@ -197,8 +201,8 @@ void MediaSync::renderVideo() {
 
                     break;
 
-
-                case AV_PIX_FMT_RGBA:
+                //这是BGRA格式，在底层glsl中会进行颜色分量转换
+                case AV_PIX_FMT_BGRA:
                     videoDevice->onInitTexture(vp->frame->width, vp->frame->height, FMT_ARGB, BLEND_NONE);
                     ret = videoDevice->onUpdateARGB(vp->frame->data[0], vp->frame->linesize[0]);
                     if(ret < 0){
@@ -297,7 +301,7 @@ void MediaSync::stop() {
     //为什么要分开写，是因为run中结束后又ext标记
     mMutex.lock();
     while (!exit){
-        mCond.wait(&mMutex);
+        mCond.wait(mMutex);
     }
     mMutex.unlock();
 
@@ -329,7 +333,7 @@ double MediaSync::getMasterClock() {
     switch (playerStatus->syncType){
         case AV_SYNC_VIDEO:
             val = videoClock->getClock();
-            break
+            break;
 
         case AV_SYNC_AUDIO:
             val = audioClock->getClock();

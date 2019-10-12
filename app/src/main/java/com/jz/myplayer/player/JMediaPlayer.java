@@ -4,6 +4,7 @@ package com.jz.myplayer.player;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.view.Surface;
 
 import com.jz.myplayer.JLog;
 
@@ -47,6 +48,10 @@ public class JMediaPlayer {
 
     public void prepareAsyn(){
         helper.preparePlayerAsyn();
+    }
+
+    public void setSurface(Surface surface){
+        helper.setVideoSurface(surface);
     }
 
     public void setListener(PreparedListener listener) {

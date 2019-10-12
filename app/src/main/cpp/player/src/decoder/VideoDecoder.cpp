@@ -66,7 +66,7 @@ void VideoDecoder::decode() {
 
     AVRational timebase = stream->time_base;
     AVRational frameRate = av_guess_frame_rate(pForamtCtx, stream, NULL);
-    while (abort){
+    while (!abort){
         if(playerStatus->seekRequest){
             continue;
         }

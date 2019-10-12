@@ -2,8 +2,15 @@ package com.jz.myplayer;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
@@ -31,6 +38,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             case R.id.remote_play:
                 startActivity(new Intent(this, PlayerActivity.class));
+
                 break;
         }
     }

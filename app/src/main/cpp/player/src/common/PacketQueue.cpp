@@ -91,7 +91,7 @@ int PacketQueue::pullPacket(AVPacket *pkt) {
             return PLAYER_FAILED;
         }
         if(first == NULL){
-            mCond.wait(&mMutex);
+            mCond.wait(mMutex);
             continue ;
         }
         *pkt = first->pkt;

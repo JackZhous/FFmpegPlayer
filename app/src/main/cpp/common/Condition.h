@@ -26,8 +26,8 @@ class Condition{
             WAKE_UP_ALL = 1
         };
 
-        int wait(Mutex* mutex);
-        int waitRelative(Mutex* mutex, int64_t time);
+        int wait(Mutex& mutex);
+        int waitRelative(Mutex& mutex, int64_t time);
 
         void signal();
 
@@ -38,11 +38,10 @@ class Condition{
                 broadcast();
             }
         };
+        void broadcast();
 
     private:
         pthread_cond_t cond;
-
-        void broadcast();
 };
 
 
@@ -67,11 +66,11 @@ inline Condition::Condition(int type) {
 }
 
 
-inline int Condition::wait(Mutex* mutex) {
-    return -pthread_cond_wait(&cond, &(mutex->mutex));
+inline int Condition::wait(Mutex& mutex) {
+    return -pthread_cond_wait(&cond, &mutex.mutex);
 }
 
-inline int Condition::waitRelative(Mutex *mutex, int64_t time) {
+inline int Condition::waitRelative(Mutex &mutex, int64_t time) {
     struct timeval tv;
     struct timespec ts;
     //获取当前时间
@@ -86,7 +85,7 @@ inline int Condition::waitRelative(Mutex *mutex, int64_t time) {
         ts.tv_nsec -= 1000000000;
         ts.tv_sec++;
     }
-    return -pthread_cond_wait(&cond, &mutex->mutex);
+    return -pthread_cond_wait(&cond, &mutex.mutex);
 }
 
 

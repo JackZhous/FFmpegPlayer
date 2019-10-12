@@ -47,6 +47,7 @@ class Player : public Runnable{
 
         int prepareFFmpeg();
         void reset();
+        void init();
         void prepareDevice();
     // open an audio output device
         int openAudioDevice(int64_t wanted_channel_layout, int wanted_nb_channels, int wanted_sample_rate);
