@@ -4,6 +4,8 @@
 
 #include "PacketQueue.h"
 
+#include "unistd.h"
+
 PacketQueue::PacketQueue() {
     reset();
 }
@@ -19,6 +21,8 @@ void PacketQueue::reset() {
     pktLen = 0;
     duration = 0;
     abort = false;
+    first = NULL;
+    last = NULL;
 }
 
 void PacketQueue::flush() {
@@ -73,7 +77,9 @@ int PacketQueue::pushPackets(AVPacket* pkt) {
         last->next = list;
         last = list;
     }
+    last->next = NULL;
     pktLen++;
+    LOGI("push one video packet %d pid %d", pktLen, gettid());
     duration += last->pkt.duration;
     size = size + sizeof(PacketList) + sizeof(pkt);
     return PLAYER_OK;
@@ -92,7 +98,7 @@ int PacketQueue::pullPacket(AVPacket *pkt) {
         }
         if(first == NULL){
             mCond.wait(mMutex);
-            continue ;
+            continue;
         }
         *pkt = first->pkt;
         temp = first->next;
@@ -101,11 +107,13 @@ int PacketQueue::pullPacket(AVPacket *pkt) {
         pktLen--;
         duration -= pkt->duration;
         size = size - sizeof(PacketList) - sizeof(pkt);
+        LOGI("pull one video packet %d pid %d", pktLen, gettid());
         if(first == NULL){
             last = NULL;
         }
         break;
     }
+    mCond.signal();
     mMutex.unlock();
     return PLAYER_OK;
 }

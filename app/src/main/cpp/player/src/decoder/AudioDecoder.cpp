@@ -8,6 +8,7 @@ AudioDecoder::AudioDecoder(AVCodecContext *codecCtx, AVStream *stream, int strea
                            PlayerStatus *status): MediaDecoder(codecCtx, stream, streamIndex, status) {
     packetAgain = false;
     packet = av_packet_alloc();
+    abort = false;
 }
 
 
@@ -31,7 +32,7 @@ int AudioDecoder::getAudioFrame(AVFrame* frame) {
         return AVERROR(ENOMEM);
     }
 
-    while (abort){
+    while (!abort){
         //packet中是否有缓存数据
         if(packetAgain){
             av_packet_move_ref(&pkt, packet);

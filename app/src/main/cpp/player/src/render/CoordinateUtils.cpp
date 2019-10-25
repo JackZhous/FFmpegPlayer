@@ -29,12 +29,12 @@ static const float texture_vertices_none_input[] = {
         1.0f, 0.0f
 };
 
-static const float texture_vertices_90_input[] = {
-        1.0f, 1.0f,
-        1.0f, 0.0f,
-        0.0f, 1.0f,
-        0.0f, 0.0f
-};
+//static const float texture_vertices_90_input[] = {
+//        1.0f, 1.0f,
+//        1.0f, 0.0f,
+//        0.0f, 1.0f,
+//        0.0f, 0.0f
+//};
 
 static const float texture_vertices_180_input[] = {
         1.0f, 0.0f,
@@ -75,12 +75,12 @@ static const float texture_vertices_none[] = {
         1.0f, 1.0f, // right, top
 };
 
-static const float texture_vertices_90[] = {
-        1.0f, 0.0f, // right, bottom
-        1.0f, 1.0f, // right, top
-        0.0f, 0.0f, // left,  bottom
-        0.0f, 1.0f, // left,  top
-};
+//static const float texture_vertices_90[] = {
+//        1.0f, 0.0f, // right, bottom
+//        1.0f, 1.0f, // right, top
+//        0.0f, 0.0f, // left,  bottom
+//        0.0f, 1.0f, // left,  top
+//};
 
 static const float texture_vertices_180[] = {
         1.0f, 1.0f, // righ,  top
@@ -95,6 +95,20 @@ static const float texture_vertices_270[] = {
         0.0f, 0.0f, // left,  bottom
         1.0f, 1.0f, // right, top
         1.0f, 0.0f, // right, bottom
+};
+
+static const float texture_vertices_90[] = {
+        1.0f, 0.0f, // right, bottom
+        1.0f, 1.0f, // right, top
+        0.0f, 0.0f, // left,  bottom
+        0.0f, 1.0f, // left,  top
+};
+
+static const float texture_vertices_90_input[] = {
+        1.0f, 1.0f, // right, top
+        1.0f, 0.0f, // right, bottom
+        0.0f, 1.0f, // left,  top
+        0.0f, 0.0f, // left,  bottom
 };
 
 const float* CoordinateUtils::getVertexCoordinates() {

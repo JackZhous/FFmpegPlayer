@@ -220,6 +220,7 @@ SLuint32 AudioDevice::getSLSampleRate(int sampleRate) {
 
 
 void AudioDevice::run() {
+    LOGI("sl es 音频设备开始工作");
     uint8_t *nextBuffer = NULL;
     int nextBufferIndex = 0;
     //启动开始播放
@@ -330,7 +331,9 @@ void AudioDevice::start() {
         if(!audioThread){
             audioThread = new Thread(this, Priority_High);
             audioThread->start();
-        }
+            LOGI("start audio device Thread");
+        } else
+            LOGE("audio device is not open success");
     } else{
         LOGE("audio device is not open success");
     }

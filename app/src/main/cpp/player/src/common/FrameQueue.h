@@ -25,10 +25,9 @@ typedef struct {
     int frameHeight;
     double pts;
     double duration;
-    AVSubtitle sub;
+//    AVSubtitle sub;
     int format;
     int upload;
-    bool used;
 }JFrame;
 
 class FrameQueue{

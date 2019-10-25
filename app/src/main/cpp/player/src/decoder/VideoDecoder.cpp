@@ -86,13 +86,14 @@ void VideoDecoder::decode() {
             break;
         }
 
-        if(avcodec_send_packet(pCodecCtx, packet) < 0){
+        ret = avcodec_send_packet(pCodecCtx, packet);
+        if(ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF){
             av_packet_unref(packet);
             LOGE("send video packet to codec failed");
             continue;
         }
-
-        if(avcodec_receive_frame(pCodecCtx, frame) < 0){
+        ret = avcodec_receive_frame(pCodecCtx, frame);
+        if(ret < 0 && ret != AVERROR_EOF){
             av_frame_unref(frame);
             av_packet_unref(packet);
             LOGE("receive video frame to codec failed");
@@ -101,31 +102,31 @@ void VideoDecoder::decode() {
             gotPicture = 1;
 
             //是否需要重排
-            if(playerStatus->reorderVideoPts == -1){
-                frame->pts = av_frame_get_best_effort_timestamp(frame);
-            } else{
-                frame->pts = frame->pkt_dts;
-            }
-            //宽高比
-            frame->sample_aspect_ratio = av_guess_sample_aspect_ratio(pForamtCtx, stream, frame);
-            if(masterClock != NULL){
-                double pts = NAN;
-                if(frame->pts != AV_NOPTS_VALUE){
-                    pts = av_q2d(timebase) * pts;
-                }
-
-                //检查此帧数据是否被丢弃
-                if(playerStatus->syncType != AV_SYNC_VIDEO){
-                    if(frame->pts != AV_NOPTS_VALUE){
-                        double diff = pts - masterClock->getClock();
-                        //拖拽视频时判断
-                        if(!isnan(diff) && diff < 0 && fabs(diff) < AV_NOSYNC_THRESHOLD && queue->getPacketLen() > 0){
-                            gotPicture = 0;
-                            av_frame_unref(frame);
-                        }
-                    }
-                }
-            }
+//            if(playerStatus->reorderVideoPts == -1){
+//                frame->pts = av_frame_get_best_effort_timestamp(frame);
+//            } else{
+//                frame->pts = frame->pkt_dts;
+//            }
+//            //宽高比
+//            frame->sample_aspect_ratio = av_guess_sample_aspect_ratio(pForamtCtx, stream, frame);
+//            if(masterClock != NULL){
+//                double pts = NAN;
+//                if(frame->pts != AV_NOPTS_VALUE){
+//                    pts = av_q2d(timebase) * pts;
+//                }
+//
+//                //检查此帧数据是否被丢弃
+//                if(playerStatus->syncType != AV_SYNC_VIDEO){
+//                    if(frame->pts != AV_NOPTS_VALUE){
+//                        double diff = pts - masterClock->getClock();
+//                        //拖拽视频时判断
+//                        if(!isnan(diff) && diff < 0 && fabs(diff) < AV_NOSYNC_THRESHOLD && queue->getPacketLen() > 0){
+//                            gotPicture = 0;
+//                            av_frame_unref(frame);
+//                        }
+//                    }
+//                }
+//            }
 
         }
         if(gotPicture){

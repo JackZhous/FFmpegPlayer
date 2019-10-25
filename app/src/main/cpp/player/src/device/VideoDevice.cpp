@@ -182,7 +182,6 @@ int VideoDevice::onRequestRender(bool flip) {
     }
     mMutex.lock();
     mVideoTexture->direction = flip ? FLIP_VERTICAL : FLIP_NONE;
-    LOGI("flip ? %d", flip);
     if (mRenderNode != NULL && eglSurface != EGL_NO_SURFACE) {
         eglHelper->makeCurrent(eglSurface);
         if (mSurfaceWidth != 0 && mSurfaceHeight != 0) {
@@ -190,6 +189,7 @@ int VideoDevice::onRequestRender(bool flip) {
         }
         mRenderNode->drawFrame(mVideoTexture);
         eglHelper->swapBuffers(eglSurface);
+//        LOGI("swap 显示图像");
     }
     mMutex.unlock();
     return 0;
@@ -210,5 +210,6 @@ void VideoDevice::surfaceCreate(ANativeWindow *window) {
         mSurfaceHeight = ANativeWindow_getHeight(window);
     }
     mHasSurface = true;
+    LOGI("set surface ");
     mMutex.unlock();
 }

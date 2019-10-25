@@ -49,6 +49,8 @@ class PlayerStatus{
         SyncType syncType;
 
         int mute;                       // 静音播放
+    int lowres;                     // 解码上下文的lowres标志
+    int fast;                       // 解码上下文的AV_CODEC_FLAG2_FAST标志
 };
 
 #endif //MYPLAYER_PLAYERSTATUS_H

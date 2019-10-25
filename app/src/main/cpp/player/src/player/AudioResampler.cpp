@@ -6,7 +6,7 @@
 #include "AudioResampler.h"
 
 AudioResampler::AudioResampler(PlayerStatus *status, AudioDecoder *audioDecoder, MediaSync *sync) {
-    this->playerStatus = playerStatus;
+    this->playerStatus = status;
     this->decoder = audioDecoder;
     this->sync = sync;
     audioState = (AudioState *)av_mallocz(sizeof(AudioState));

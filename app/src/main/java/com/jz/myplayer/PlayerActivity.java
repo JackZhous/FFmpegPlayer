@@ -28,6 +28,8 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     private JMediaPlayer player;
     private String url = "rtmp://58.200.131.2:1935/livetv/hunantv";
 
+//    private String url = "/storage/emulated/0/tencent/MicroMsg/WeiXin/wx_camera_1571375025172.mp4";
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,9 +40,10 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
 
 
     private void init(){
-        surfaceView = findViewById(R.id.surfaceView);
-        display = findViewById(R.id.display);
         player = new JMediaPlayer();
+        surfaceView = findViewById(R.id.surfaceView);
+        surfaceView.getHolder().addCallback(this);
+        display = findViewById(R.id.display);
         findViewById(R.id.start).setOnClickListener(this);
         player.setVideoUrl(url);
         player.setListener(new JMediaPlayer.PreparedListener() {
@@ -59,7 +62,7 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         if(player != null){
-          //  player.setSurface(surfaceView.getHolder().getSurface());
+            player.setSurface(surfaceView.getHolder().getSurface());
         }
     }
 

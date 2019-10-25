@@ -85,7 +85,7 @@ inline int Condition::waitRelative(Mutex &mutex, int64_t time) {
         ts.tv_nsec -= 1000000000;
         ts.tv_sec++;
     }
-    return -pthread_cond_wait(&cond, &mutex.mutex);
+    return -pthread_cond_timedwait(&cond, &mutex.mutex, &ts);
 }
 
 

@@ -25,6 +25,7 @@ Player::~Player() {
     delete playerStatus;
     delete aDevice;
     aDevice = NULL;
+    LOGI("player is destroyed");
     reset();
     avformat_network_deinit();
 }
@@ -96,13 +97,8 @@ void Player::setSurface(ANativeWindow *window) {
     }
 
     if(vDevice){
-        delete vDevice;
-        vDevice = NULL;
+        vDevice->surfaceCreate(window);
     }
-    if(vDevice){
-        vDevice = new VideoDevice();
-    }
-    vDevice->surfaceCreate(window);
 }
 
 void Player::prepareDevice() {
@@ -212,11 +208,14 @@ int Player::prepareDecoder(int streamIndex) {
         return ret;
     }
 
-    codecContext->time_base = pFormatCtx->streams[streamIndex]->time_base;
-    char* codecName = NULL;
+    // 设置时钟基准
+    av_codec_set_pkt_timebase(codecContext, pFormatCtx->streams[streamIndex]->time_base);
+
+    const char* codecName = NULL;
     switch (codecContext->codec_type){
         case AVMEDIA_TYPE_VIDEO:
             codecName = playerStatus->forcedVideoCodecName;
+//            codecName = "h264_mediacodec";
             break;
 
 
@@ -242,9 +241,42 @@ int Player::prepareDecoder(int streamIndex) {
         return -1;
     }
     codecContext->codec_id = codec->id;
+    LOGI("codec name %s", codec->name);
+// 设置一些播放参数
+    int stream_lowres = playerStatus->lowres;
+    if (stream_lowres > av_codec_get_max_lowres(codec)) {
+        av_log(codecContext, AV_LOG_WARNING, "The maximum value for lowres supported by the decoder is %d\n",
+               av_codec_get_max_lowres(codec));
+        stream_lowres = av_codec_get_max_lowres(codec);
+    }
+    av_codec_set_lowres(codecContext, stream_lowres);
+#if FF_API_EMU_EDGE
+    if (stream_lowres) {
+        codecContext->flags |= CODEC_FLAG_EMU_EDGE;
+    }
+#endif
+    if (playerStatus->fast) {
+        codecContext->flags2 |= AV_CODEC_FLAG2_FAST;
+    }
+#if FF_API_EMU_EDGE
+    if (codec->capabilities & AV_CODEC_CAP_DR1) {
+        codecContext->flags |= CODEC_FLAG_EMU_EDGE;
+    }
+#endif
+    AVDictionary *opts = NULL;
+//    opts = filterCodecOptions(playerStatus->codec_opts, avctx->codec_id, pFormatCtx, pFormatCtx->streams[streamIndex], codec);
+    if (!av_dict_get(opts, "threads", NULL, 0)) {
+        av_dict_set(&opts, "threads", "auto", 0);
+    }
 
+    if (stream_lowres) {
+        av_dict_set_int(&opts, "lowres", stream_lowres, 0);
+    }
 
-    ret = avcodec_open2(codecContext, codec, NULL);
+    if (codecContext->codec_type == AVMEDIA_TYPE_VIDEO || codecContext->codec_type == AVMEDIA_TYPE_AUDIO) {
+        av_dict_set(&opts, "refcounted_frames", "1", 0);
+    }
+    ret = avcodec_open2(codecContext, codec, &opts);
     if(ret < 0){
         printError("open codec failed", ret);
         return ret;
@@ -270,7 +302,6 @@ int Player::prepareDecoder(int streamIndex) {
 
 void Player::run() {
     //1. 初始化ffmpeg库
-    reset();
     init();
     int ret = prepareFFmpeg();
     if(ret <= PLAYER_FAILED){
@@ -307,7 +338,7 @@ void Player::run() {
                 }
             }
         } else{
-            aDevice->start();
+//            aDevice->start();
         }
     }
 
@@ -323,6 +354,7 @@ void Player::run() {
     }
 
     if(sync){
+        sync->setVideoDevice(vDevice);
         sync->start(aDecoder, vDecoder);
     }
 
@@ -420,7 +452,8 @@ void Player::run() {
         if(pktIndex == vDecoder->getStreamIndex()){
             vDecoder->getPacketQueue()->pushPacket(&packet);
         } else if(pktIndex == aDecoder->getStreamIndex()){
-            aDecoder->getPacketQueue()->pushPacket(&packet);
+//            aDecoder->getPacketQueue()->pushPacket(&packet);
+
         } else{
             av_packet_unref(&packet);
         }
