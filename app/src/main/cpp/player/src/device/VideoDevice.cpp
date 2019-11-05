@@ -109,6 +109,7 @@ void VideoDevice::onInitTexture(int width, int height, TextureFormat format, Ble
 
     //计算帧宽高，如果不相等，则需要重新计算缓冲区大小
     if(mWindow != NULL && mSurfaceWidth != 0 && mSurfaceHeight != 0){
+        LOGI("width height %d -- %d -- %d --- %d", mSurfaceWidth, mSurfaceHeight, width, height);
         //宽高比不一致，需要调整缓冲区大小，以宽度为基准
         if((mSurfaceWidth / mSurfaceHeight) != (width/height)){
             mSurfaceHeight = mSurfaceWidth * height / width;

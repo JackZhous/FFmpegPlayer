@@ -42,6 +42,10 @@ public class JMediaPlayer {
         player.handler.sendMessage(msg);
     }
 
+    public NativeHelper getHelper() {
+        return helper;
+    }
+
     public void setVideoUrl(String url){
         helper.setUrl(url);
     }

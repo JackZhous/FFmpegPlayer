@@ -28,6 +28,8 @@ class JMediaPlayer : public Runnable{
         void prepareAsyn();
         int getWidth();
         int getHeight();
+        int getRorate();
+        void startPlay();
         void seekVideo(float time);
         void setLoop(int loop);
         void setSurface(ANativeWindow* window);

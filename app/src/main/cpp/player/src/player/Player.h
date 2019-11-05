@@ -36,6 +36,8 @@ class Player : public Runnable{
 
         int getWidth();
         int getHeight();
+        int getRorate();
+        void startPlay();
         void prepare();
         void seekVideo(float times);
         void setLoop(int loop);

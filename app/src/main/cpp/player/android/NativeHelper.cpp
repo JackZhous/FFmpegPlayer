@@ -105,9 +105,19 @@ static int getVideoHeight(JNIEnv* env, jobject thiz){
     return player->getHeight();
 }
 
+static int getRorate(JNIEnv* env, jobject thiz){
+    return player->getRorate();
+}
+
+static void startPlay(JNIEnv* env, jobject thiz){
+    player->startPlay();
+}
+
 static void seekVideo(JNIEnv* env, jobject thiz, jfloat time){
     player->seekVideo(time);
 }
+
+
 
 
 static void setLoop(JNIEnv* env, jobject thiz, jint loop){
@@ -135,7 +145,9 @@ static const JNINativeMethod nativeToJavaMethod[] = {
         {"preparePlayerAsyn", "()V", (void*)preparePlayer},
         {"getVideoWidth","()I", (void*)getVideoWidth},
         {"getVideoHeight", "()I", (void*)getVideoHeight},
+        {"getRorate", "()I", (void*)getRorate},
         {"seekRequest", "(F)V", (void*)seekVideo},
+        {"start", "()V", (void*)startPlay},
         {"setLoop", "(I)V", (void*)setLoop},
         {"setVideoSurface", "(Landroid/view/Surface;)V", (void*)setVideoSurface}
 };

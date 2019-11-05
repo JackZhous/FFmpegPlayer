@@ -128,11 +128,22 @@ int Player::getHeight() {
     return vDecoder->getCodecCtx()->height;
 }
 
+int Player::getRorate() {
+    return vDecoder->getRorate();
+}
+
 void Player::prepare() {
     playerStatus->abortRequest = 0;
     Thread* thread = new Thread(this);
     thread->start();
-    playerStatus->queue->addMessage(PREPARE_PLAYER, "player is prepared!");
+}
+
+
+void Player::startPlay() {
+    AutoMutex lock(mMutex);
+    playerStatus->abortRequest = 0;
+    playerStatus->pauseRequest = 0;
+    mCond.signal();
 }
 
 /**
@@ -308,7 +319,7 @@ void Player::run() {
         playerStatus->queue->addMessage(FFMPEG_INIT_FAILED, "ffmpeg init failed");
         return;
     }
-
+    playerStatus->queue->addMessage(PREPARE_PLAYER, "player is prepared!");
     /**
      * 这里需要做的工作主要有
      * 2. 打开音视频设备
@@ -356,6 +367,11 @@ void Player::run() {
     if(sync){
         sync->setVideoDevice(vDevice);
         sync->start(aDecoder, vDecoder);
+    }
+
+    while (!playerStatus->abortRequest && playerStatus->pauseRequest){
+        av_usleep(10 * 1000);
+        LOGI("sleeping");
     }
 
     LOGI("prepare ffmpeg!");

@@ -179,7 +179,7 @@ void MediaSync::renderVideo() {
         //虽然是last，但是上一个函数pop一次，就是当前帧
         JFrame* vp = vDecoder->getFrameQueue()->getLastFrame();
         int ret = 0;
-        LOGE("format %d  upload %d" , vp->frame->format, vp->upload);
+//        LOGE("format %d  upload %d" , vp->frame->format, vp->upload);
         if(!vp->upload){
             vp->upload = 1;
 

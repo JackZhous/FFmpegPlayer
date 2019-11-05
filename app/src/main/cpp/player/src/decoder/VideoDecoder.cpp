@@ -10,6 +10,13 @@ VideoDecoder::VideoDecoder(AVCodecContext *codecCtx, AVStream *stream, int strea
     masterClock = NULL;
     frameQueue = new FrameQueue(8);
     this->pForamtCtx = pForamtCtx;
+    //视频图像是否有旋转
+    AVDictionaryEntry *entry = av_dict_get(stream->metadata, "rotate", NULL, AV_DICT_MATCH_CASE);
+    if(entry && entry->value){
+        mRorate = atoi(entry->value);
+    } else{
+        mRorate = 0;
+    }
 }
 
 VideoDecoder::~VideoDecoder() {

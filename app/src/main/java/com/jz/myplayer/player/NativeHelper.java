@@ -47,9 +47,13 @@ public class NativeHelper {
 
     public native int getVideoHeight();
 
+    public native int getRorate();
+
     public native void seekRequest(float time);
 
     public native void setLoop(int loop);
 
     public native void setVideoSurface(Surface surface);
+
+    public native void start();
 }

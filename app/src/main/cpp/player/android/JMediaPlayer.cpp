@@ -87,14 +87,27 @@ void JMediaPlayer::prepareAsyn() {
 
 int JMediaPlayer::getHeight() {
     if(player != NULL){
-        player->getHeight();
+        return player->getHeight();
     }
     return 0;
 }
 
+int JMediaPlayer::getRorate() {
+    if(player != NULL){
+        return player->getRorate();
+    }
+    return 0;
+}
+
+void JMediaPlayer::startPlay() {
+    if(player != NULL){
+        player->startPlay();
+    }
+}
+
 int JMediaPlayer::getWidth() {
     if(player != NULL){
-        player->getWidth();
+        return player->getWidth();
     }
     return 0;
 }

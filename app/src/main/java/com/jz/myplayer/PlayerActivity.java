@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.jz.myplayer.player.JMediaPlayer;
@@ -50,8 +51,22 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
             @Override
             public void onPrepared() {
                 JLog.I("java received prepared");
+                int viewWidth  = surfaceView.getWidth();
+                int viewHeight;
+                if (player.getHelper().getRorate() % 180 != 0) {
+                    viewHeight = viewWidth * player.getHelper().getVideoWidth() / player.getHelper().getVideoHeight();
+                } else {
+                    viewHeight = viewWidth * player.getHelper().getVideoHeight() / player.getHelper().getVideoWidth();
+                }
+                ViewGroup.LayoutParams layoutParams = surfaceView.getLayoutParams();
+                layoutParams.width = viewWidth;
+                layoutParams.height = viewHeight;
+                surfaceView.setLayoutParams(layoutParams);
+
+                player.getHelper().start();
             }
         });
+        player.prepareAsyn();
     }
 
     @Override

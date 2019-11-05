@@ -79,7 +79,7 @@ int PacketQueue::pushPackets(AVPacket* pkt) {
     }
     last->next = NULL;
     pktLen++;
-    LOGI("push one video packet %d pid %d", pktLen, gettid());
+//    LOGI("push one video packet %d pid %d", pktLen, gettid());
     duration += last->pkt.duration;
     size = size + sizeof(PacketList) + sizeof(pkt);
     return PLAYER_OK;
@@ -107,7 +107,7 @@ int PacketQueue::pullPacket(AVPacket *pkt) {
         pktLen--;
         duration -= pkt->duration;
         size = size - sizeof(PacketList) - sizeof(pkt);
-        LOGI("pull one video packet %d pid %d", pktLen, gettid());
+//        LOGI("pull one video packet %d pid %d", pktLen, gettid());
         if(first == NULL){
             last = NULL;
         }

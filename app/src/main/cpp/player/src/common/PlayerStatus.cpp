@@ -26,8 +26,8 @@ void PlayerStatus::setVideoUrl(char *url) {
 void PlayerStatus::reset() {
 //    url = NULL;
     vedioPath = NULL;
-    pauseRequest = 0;
-    abortRequest = 0;
+    pauseRequest = 1;
+    abortRequest = 1;
     mDuration = -1;
     reorderVideoPts = -1;
     seekRequest = 0;
@@ -35,4 +35,5 @@ void PlayerStatus::reset() {
     playDuration = AV_NOPTS_VALUE;
     start_time = AV_NOPTS_VALUE;
     mute = 0;
+    loop = 0;
 }

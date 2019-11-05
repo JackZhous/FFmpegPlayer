@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.ListView;
+import android.widget.TextView;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -38,7 +40,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             case R.id.remote_play:
                 startActivity(new Intent(this, PlayerActivity.class));
-
                 break;
         }
     }
