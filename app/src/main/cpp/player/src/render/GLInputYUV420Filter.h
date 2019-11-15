@@ -27,6 +27,9 @@ const std::string yuv420FragmentShader = STRINGS(
             rgb = mat3(1.164, 1.164, 1.164,
                        0.0, -0.213, 2.112,
                        1.793, -0.533, 0.0) * yuv;
+//            rgb = mat3( 1.164,     1.164,     1.164,
+//                  0.0,    -0.392,     2.017,
+//                  1.596,    -0.813,       0.0) * yuv;
             gl_FragColor = vec4(rgb, 1.0);
         }
 );

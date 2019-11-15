@@ -15,19 +15,18 @@ FrameQueue::FrameQueue(int max) {
     inputIndex = 0;
     outputIndex = 0;
     size = 0;
+    exit = false;
 }
 
 FrameQueue::~FrameQueue() {
-    for(int i = 0; i < queueMax; i++){
-        av_frame_unref(frame[i].frame);
-//        avsubtitle_free(&(frame[i].sub));
-    }
+   flush();
+   LOGI("FrameQueue消息队列jieshu");
 }
 
 void FrameQueue::flush() {
     mMutex.lock();
     while (size > 0){
-        av_frame_unref(frame[outputIndex].frame);
+        av_frame_unref(frame[outputIndex % 8].frame);
 //        avsubtitle_free(&(frame[outputIndex].sub));
         size--;
         outputIndex++;
@@ -39,6 +38,21 @@ void FrameQueue::flush() {
     mMutex.unlock();
 }
 
+
+void FrameQueue::start() {
+    mMutex.lock();
+    abort = 0;
+    mCond.signal();
+    mMutex.unlock();
+}
+
+void FrameQueue::stop() {
+    flush();
+    AutoMutex lock(mMutex);
+    abort = 1;
+    exit = true;
+    mCond.signal();
+}
 
 
 int FrameQueue::getFrameLen() const {
@@ -70,7 +84,11 @@ void FrameQueue::setAbort(short abort) {
 JFrame* FrameQueue::getpushFrame() {
     mMutex.lock();
     JFrame* pFrame;
-    while (size >= queueMax || !abort){
+    while (size >= (queueMax - 2) || abort){
+        if(exit){
+            mMutex.unlock();
+            return NULL;
+        }
         mCond.wait(mMutex);
     }
 //    LOGI("getPushFrame %d", inputIndex % queueMax);
@@ -82,6 +100,9 @@ JFrame* FrameQueue::getpushFrame() {
 }
 
 void FrameQueue::push() {
+    if(exit){
+        return;
+    }
     mMutex.lock();
     size++;
     inputIndex++;
@@ -108,8 +129,15 @@ JFrame* FrameQueue::getPopFrame() {
  * 出队列 先调pop 在调用getLastFrame
  */
 void FrameQueue::pop() {
+    if(exit){
+        return;
+    }
     mMutex.lock();
-    while (size <= 0 || !abort){
+    while (size <= 0 || abort){
+        if(exit){
+            mMutex.unlock();
+            return;
+        }
         mCond.wait(mMutex);
     }
 //    LOGI("pop size %d", size);
@@ -126,10 +154,20 @@ void FrameQueue::pop() {
 
 
 void FrameQueue::unrefFrame(JFrame *frame) {
-    if(frame && frame->upload){
-//        LOGI("used");
-        av_frame_unref(frame->frame);
-//        avsubtitle_free(&frame->sub);
-        size--;
+    av_frame_unref(frame->frame);
+    size--;
+}
+
+void FrameQueue::startRender() {
+    finishFlag = 1;
+}
+
+void FrameQueue::finishRender() {
+    int index = outputIndex - 1;
+    if(index < 0){
+        index = queueMax - 1;
     }
+    JFrame* frame1 = &frame[index];
+    finishFlag = 0;
+    unrefFrame(frame1);
 }

@@ -29,6 +29,7 @@ public:
     int getPacketLen() const ;
     void reset();               //为什么有这个方法，因为滑动进度条需要重置缓冲区的数据
     void abortRequest();
+    void start();
 
 private:
     int pushPackets(AVPacket* pkt);

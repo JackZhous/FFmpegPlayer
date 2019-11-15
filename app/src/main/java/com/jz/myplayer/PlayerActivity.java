@@ -3,6 +3,7 @@ package com.jz.myplayer;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -21,15 +22,11 @@ import com.jz.myplayer.player.JMediaPlayer;
  * @describe TODO
  * @email jackzhouyu@foxmail.com
  **/
-public class PlayerActivity extends AppCompatActivity implements View.OnClickListener,
+public class PlayerActivity extends AppCompatActivity implements
                                                                 SurfaceHolder.Callback {
 
     private SurfaceView surfaceView;
-    private TextView display;
     private JMediaPlayer player;
-    private String url = "rtmp://58.200.131.2:1935/livetv/hunantv";
-
-//    private String url = "/storage/emulated/0/tencent/MicroMsg/WeiXin/wx_camera_1571375025172.mp4";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -41,16 +38,17 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
 
 
     private void init(){
+        String url = getIntent().getStringExtra("url");
         player = new JMediaPlayer();
+        JLog.I(url);
         surfaceView = findViewById(R.id.surfaceView);
         surfaceView.getHolder().addCallback(this);
-        display = findViewById(R.id.display);
-        findViewById(R.id.start).setOnClickListener(this);
         player.setVideoUrl(url);
         player.setListener(new JMediaPlayer.PreparedListener() {
             @Override
             public void onPrepared() {
-                JLog.I("java received prepared");
+                JLog.I("java received prepared " + player.getHelper().getRorate());
+                JLog.I("jni width height " + player.getHelper().getVideoWidth() + " " + player.getHelper().getVideoHeight());
                 int viewWidth  = surfaceView.getWidth();
                 int viewHeight;
                 if (player.getHelper().getRorate() % 180 != 0) {
@@ -58,6 +56,10 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
                 } else {
                     viewHeight = viewWidth * player.getHelper().getVideoHeight() / player.getHelper().getVideoWidth();
                 }
+                if(viewHeight > surfaceView.getHeight()){
+                    viewHeight = surfaceView.getHeight();
+                }
+                JLog.I("java width height " + viewWidth + " " + viewHeight);
                 ViewGroup.LayoutParams layoutParams = surfaceView.getLayoutParams();
                 layoutParams.width = viewWidth;
                 layoutParams.height = viewHeight;
@@ -66,11 +68,6 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
                 player.getHelper().start();
             }
         });
-        player.prepareAsyn();
-    }
-
-    @Override
-    public void onClick(View v) {
         player.prepareAsyn();
     }
 
@@ -89,5 +86,24 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        player.getHelper().onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        player.getHelper().onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        player.getHelper().onStop();
+        player.getHelper().release();
     }
 }

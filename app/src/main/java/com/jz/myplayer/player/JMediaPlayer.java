@@ -27,8 +27,8 @@ public class JMediaPlayer {
     public JMediaPlayer() {
         this.helper = NativeHelper.Holder.getNativeHelper();
         handler = new MyHandler(Looper.getMainLooper());
+        //开启消息线程读取,以及初始化一些类
         helper.nativeSetConnect(this, new WeakReference<>(this));
-
     }
 
 
@@ -69,7 +69,6 @@ public class JMediaPlayer {
 
         @Override
         public void handleMessage(Message msg) {
-            JLog.I("handleMessage " + msg.what);
             switch (msg.what){
                 case 5:
                     if(listener != null){

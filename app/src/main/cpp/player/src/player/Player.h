@@ -38,19 +38,21 @@ class Player : public Runnable{
         int getHeight();
         int getRorate();
         void startPlay();
+        void pause();
+        void onResume();
+        void reset();
+        void stop();
+        void setVideoDevice(VideoDevice* device);
         void prepare();
         void seekVideo(float times);
         void setLoop(int loop);
-        void setSurface(ANativeWindow* window);
         void pcmQueueCallback(uint8_t *stream, int len);
 
     private:
         int prepareDecoder(int streamIndex);
 
         int prepareFFmpeg();
-        void reset();
         void init();
-        void prepareDevice();
     // open an audio output device
         int openAudioDevice(int64_t wanted_channel_layout, int wanted_nb_channels, int wanted_sample_rate);
 
@@ -69,10 +71,13 @@ private:
     MediaSync* sync;
     bool attchmentRequest;          //封面包
     int eof;                        //文件播放结束标志
+    bool mExit;
     AudioDevice* aDevice;
     VideoDevice* vDevice;
 
     AudioResampler *audioResampler;
+
+    Thread* readPacketThread;
 };
 
 

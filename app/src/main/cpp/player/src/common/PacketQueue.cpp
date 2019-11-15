@@ -37,6 +37,7 @@ void PacketQueue::flush() {
     first = NULL;
     last = NULL;
     mMutex.unlock();
+    LOGI("PacketQueue消息队列结束");
 }
 
 int PacketQueue::getPacketQueueSize() const {
@@ -94,6 +95,7 @@ int PacketQueue::pullPacket(AVPacket *pkt) {
     for(;;){
         if(abort){
             LOGI("reject get AVPacket");
+            mMutex.unlock();
             return PLAYER_FAILED;
         }
         if(first == NULL){
@@ -131,4 +133,11 @@ void PacketQueue::abortRequest() {
 
 int64_t PacketQueue::getDuration() const {
     return duration;
+}
+
+void PacketQueue::start() {
+    mMutex.lock();
+    abort = false;
+    mCond.signal();
+    mMutex.unlock();
 }

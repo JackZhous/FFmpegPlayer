@@ -29,7 +29,13 @@ class JMediaPlayer : public Runnable{
         int getWidth();
         int getHeight();
         int getRorate();
+        void onResume();
+        void onStop();
+        void init();
+        void release();
+        void reset();
         void startPlay();
+        void onPause();
         void seekVideo(float time);
         void setLoop(int loop);
         void setSurface(ANativeWindow* window);
@@ -46,6 +52,10 @@ class JMediaPlayer : public Runnable{
         Player* player;
         bool abort;      //停止标志
         bool seeking;      //定位中
+        Thread* msgThread;
+        VideoDevice* vDevice;
+        Mutex mMutex;
+        Condition mCond;
 };
 
 

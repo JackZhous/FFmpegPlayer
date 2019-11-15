@@ -78,6 +78,16 @@ void MediaDecoder::stop() {
     mCond.signal();
     mMutex.unlock();
     if(queue){
-//        queue->abortRequest();
+        queue->abortRequest();
     }
+}
+
+void MediaDecoder::start() {
+    if(queue){
+        queue->start();
+    }
+    mMutex.lock();
+    abort = false;
+    mCond.signal();
+    mMutex.unlock();
 }

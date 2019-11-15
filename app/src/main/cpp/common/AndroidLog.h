@@ -18,7 +18,7 @@
  * 宏里面不可以使用...省略号
  */
 #define LOGI(format, ...) __android_log_print(ANDROID_LOG_INFO, TAG, format, ##__VA_ARGS__)
-#define LOGE(format, ...) __android_log_print(ANDROID_LOG_ERROR, TAG, format, ##__VA_ARGS__)
+#define LOGE(format, ...) __android_log_print(ANDROID_LOG_ERROR, "test", format, ##__VA_ARGS__)
 #define LOGV(format, ...) __android_log_print(ANDROID_LOG_VERBOSE, TAG, format, ##__VA_ARGS__)
 #define LOGW(format, ...) __android_log_print(ANDROID_LOG_WARN, TAG, format, ##__VA_ARGS__)
 

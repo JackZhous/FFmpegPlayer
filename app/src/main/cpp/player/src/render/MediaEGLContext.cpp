@@ -78,7 +78,7 @@ bool MediaEGLContext::init(int flags) {
 
     int value[1] = {0};
     eglQueryContext(eglDisplay, eglContext, EGL_CONTEXT_CLIENT_VERSION, value);
-    LOGI("EGLContext created, the client version is %d", value);
+    LOGI("EGLContext created, the client version is %d", value[0]);
     return true;
 }
 

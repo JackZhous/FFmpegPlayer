@@ -30,9 +30,11 @@ FrameBuffer::~FrameBuffer() {
 void FrameBuffer::destroy() {
     if(texture >= 0){
         glDeleteTextures(1, &texture);
+        texture = -1;
     }
     if(frameBuffer >= 0){
         glDeleteFramebuffers(1, &frameBuffer);
+        frameBuffer = -1;
     }
 }
 

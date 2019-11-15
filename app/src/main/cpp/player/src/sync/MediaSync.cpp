@@ -60,7 +60,7 @@ void MediaSync::run() {
         }
 
         if(remaining_time > 0.0){
-//            av_usleep(remaining_time * 1000000.0);
+            av_usleep(remaining_time * 1000000.0);
         }
 
         remaining_time = REFRESH_RATE;
@@ -80,93 +80,95 @@ void MediaSync::refreshVideo(double *remain_time) {
     if(!playerStatus->pauseRequest && playerStatus->syncType == AV_SYNC_EXTERNAL){
         checkExternalClockSpeed();
     }
+    for(;;){
+        vDecoder->getFrameQueue()->startRender();
+        if(playerStatus->abortRequest || !vDecoder){
+            break;
+        }
 
-//    for(;;){
-//        if(playerStatus->abortRequest || !vDecoder){
-//            break;
-//        }
-//
-//        //帧队列是否存在数据
-//        if(vDecoder->getFrameSize() > 0){
-//            double lastDuration, duration, delay;
-//            JFrame *currentFrame, *lastFrame;
-//
-//            lastFrame = vDecoder->getFrameQueue()->getLastFrame();
-//            currentFrame = vDecoder->getFrameQueue()->getCurrentFrame();
-//            // 判断是否需要强制更新帧的时间,定位视频触发
-//            if(frameTimerRefresh){
-//                frameTimer = av_gettime_relative() / 1000000.0;
-//                frameTimerRefresh = 0;
-//            }
-//
-//            //暂停状态直接显示
-//            if(playerStatus->abortRequest || playerStatus->pauseRequest){
-//                break;
-//            }
-//
-//            //计算上一次显示的时长
-//            lastDuration = calculateDuration(lastFrame, currentFrame);
-//            //根据上一次显示时长来计算时延
-//            delay = calculateDelay(lastDuration);
-//            if(fabs(delay) > AV_SYNC_THRESHOLD_MAX){
-//                if(delay > 0){
-//                    delay = AV_SYNC_THRESHOLD_MAX;
-//                } else{
-//                    delay = 0;
-//                }
-//            }
-//
-//            time = av_gettime_relative() / 1000000.0;
-//            if(isnan(frameTimer) || time < frameTimer){
-//                frameTimer = time;
-//            }
-//
-//            if(time < frameTimer + delay){
-//                *remain_time = FFMIN(frameTimer + delay - time, *remain_time);
-//                break;
-//            }
-//
-//            //更新帧计时器
-//            frameTimer += delay;
-//            // 帧计时器落后当前时间超过了阈值，则用当前的时间作为帧计时器时间
-//            if(delay > 0 && time - frameTimer > AV_SYNC_THRESHOLD_MAX){
-//                frameTimer = time;
-//            }
-//
-//
-//            //更新视频时钟
-//            mMutex.lock();
-//            if(!isnan(currentFrame->pts)){
-//                videoClock->setClock(currentFrame->pts);
-//                extClock->syncToSlave(videoClock);
-//            }
-//            mMutex.unlock();
-//
-//            // 如果队列中还剩余超过一帧的数据时，需要拿到下一帧，然后计算间隔，并判断是否需要进行舍帧操作
-//            if(vDecoder->getFrameSize() > 1){
-//                JFrame *nextFrame = vDecoder->getFrameQueue()->getNextFrame();
-//                duration = calculateDuration(currentFrame, nextFrame);
-//                //如果系统时钟比下一帧播放时间都还大，就没必要显示了
-//                if(time > frameTimer + duration){
-//                    vDecoder->getFrameQueue()->pop();
-//                    continue;
-//                }
-//            }
-//            //下一帧
-//            vDecoder->getFrameQueue()->pop();
-//            forceFresh = 1;
-//        }
-//
-//        break;
-//    }
+        //帧队列是否存在数据
+        if(vDecoder->getFrameSize() > 0){
+            double lastDuration, duration, delay;
+            JFrame *currentFrame, *lastFrame;
+
+            lastFrame = vDecoder->getFrameQueue()->getLastFrame();
+            currentFrame = vDecoder->getFrameQueue()->getCurrentFrame();
+            // 判断是否需要强制更新帧的时间,定位视频触发
+            if(frameTimerRefresh){
+                frameTimer = av_gettime_relative() / 1000000.0;
+                frameTimerRefresh = 0;
+            }
+
+            //暂停状态直接显示
+            if(playerStatus->abortRequest || playerStatus->pauseRequest){
+                break;
+            }
+
+            //计算上一次显示的时长
+            lastDuration = calculateDuration(lastFrame, currentFrame);
+            //根据上一次显示时长来计算时延
+            delay = calculateDelay(lastDuration);
+            if(fabs(delay) > AV_SYNC_THRESHOLD_MAX){
+                if(delay > 0){
+                    delay = AV_SYNC_THRESHOLD_MAX;
+                } else{
+                    delay = 0;
+                }
+            }
+
+            time = av_gettime_relative() / 1000000.0;
+            LOGI("framer time %f, current time %f delay %f", frameTimer, time, delay);
+            if(isnan(frameTimer) || time < frameTimer){
+                frameTimer = time;
+            }
+
+            if(time < frameTimer + delay){
+                *remain_time = FFMIN(frameTimer + delay - time, *remain_time);
+                break;
+            }
+
+            //更新帧计时器
+            frameTimer += delay;
+            // 帧计时器落后当前时间超过了阈值，则用当前的时间作为帧计时器时间
+            if(delay > 0 && time - frameTimer > AV_SYNC_THRESHOLD_MAX){
+                frameTimer = time;
+            }
+
+
+            //更新视频时钟
+            mMutex.lock();
+            if(!isnan(currentFrame->pts)){
+                videoClock->setClock(currentFrame->pts);
+                extClock->syncToSlave(videoClock);
+            }
+            mMutex.unlock();
+
+            // 如果队列中还剩余超过一帧的数据时，需要拿到下一帧，然后计算间隔，并判断是否需要进行舍帧操作
+            if(vDecoder->getFrameSize() > 1){
+                JFrame *nextFrame = vDecoder->getFrameQueue()->getNextFrame();
+                duration = calculateDuration(currentFrame, nextFrame);
+                //如果系统时钟比下一帧播放时间都还大，就没必要显示了
+                if(time > frameTimer + duration){
+                    vDecoder->getFrameQueue()->finishRender();
+                    vDecoder->getFrameQueue()->pop();
+                    continue;
+                }
+            }
+            //下一帧
+            vDecoder->getFrameQueue()->finishRender();
+            vDecoder->getFrameQueue()->pop();
+            forceFresh = 1;
+        }
+
+        break;
+    }
 
     //刷新画面
-//    if(forceFresh == 1){
-        vDecoder->getFrameQueue()->pop();
+    if(forceFresh == 1){
         renderVideo();
-//    }
+    }
 
-//    forceFresh = 0;
+    forceFresh = 0;
 }
 
 //刷新画面
@@ -182,7 +184,6 @@ void MediaSync::renderVideo() {
 //        LOGE("format %d  upload %d" , vp->frame->format, vp->upload);
         if(!vp->upload){
             vp->upload = 1;
-
             switch (vp->frame->format){
                 // YUV420P 和 YUVJ420P 除了色彩空间不一样之外，其他的没什么区别
                 // YUV420P表示的范围是 16 ~ 235，而YUVJ420P表示的范围是0 ~ 255
@@ -203,9 +204,6 @@ void MediaSync::renderVideo() {
                         LOGE("update yuv failed");
                         break;
                     }
-                    if(videoDevice){
-                        videoDevice->onRequestRender(vp->frame->linesize[0] < 0);
-                    }
                     break;
 
                 //这是BGRA格式，在底层glsl中会进行颜色分量转换
@@ -218,37 +216,40 @@ void MediaSync::renderVideo() {
                     }
                     break;
 
+                case -1:
+                    break;
 
                 //其他格式转码成RGBA渲染
                 default:
-//                    swsContext = sws_getCachedContext(swsContext, vp->frame->width, vp->frame->height,
-//                                                      (AVPixelFormat)vp->frame->format,
-//                                                       vp->frame->width, vp->frame->height,
-//                                                        AV_PIX_FMT_BGRA, SWS_BICUBIC, NULL, NULL, NULL);
-//                    if(!mBuffer){
-//                        int numBytes = av_image_get_buffer_size(AV_PIX_FMT_BGRA, vp->frame->width,
-//                                                            vp->frame->height, 1);
-//                        mBuffer = (uint8_t*)av_malloc(numBytes * sizeof(uint8_t));
-//                        pFrameARGB = av_frame_alloc();
-//                        av_image_fill_arrays(pFrameARGB->data, pFrameARGB->linesize, mBuffer,
-//                                            AV_PIX_FMT_BGRA, vp->frame->width, vp->frame->height, 1);
-//                    }
-//                    if(swsContext){
-//                        sws_scale(swsContext, (uint8_t const * const *)vp->frame->data, vp->frame->linesize, 0, vp->frame->height,
-//                                pFrameARGB->data, pFrameARGB->linesize);
-//                    }
-//
-//                    videoDevice->onInitTexture(vp->frame->width, vp->frame->height, FMT_ARGB, BLEND_NONE, vDecoder->getRorate());
-//                    ret = videoDevice->onUpdateARGB(pFrameARGB->data[0], pFrameARGB->linesize[0]);
-//                    if(ret < 0){
-//                        LOGE("update sws rgba failed");
-//                        return;
-//                    }
+                    swsContext = sws_getCachedContext(swsContext, vp->frame->width, vp->frame->height,
+                                                      (AVPixelFormat)vp->frame->format,
+                                                       vp->frame->width, vp->frame->height,
+                                                        AV_PIX_FMT_BGRA, SWS_BICUBIC, NULL, NULL, NULL);
+                    if(!mBuffer){
+                        int numBytes = av_image_get_buffer_size(AV_PIX_FMT_BGRA, vp->frame->width,
+                                                            vp->frame->height, 1);
+                        mBuffer = (uint8_t*)av_malloc(numBytes * sizeof(uint8_t));
+                        pFrameARGB = av_frame_alloc();
+                        av_image_fill_arrays(pFrameARGB->data, pFrameARGB->linesize, mBuffer,
+                                            AV_PIX_FMT_BGRA, vp->frame->width, vp->frame->height, 1);
+                    }
+                    if(swsContext){
+                        sws_scale(swsContext, (uint8_t const * const *)vp->frame->data, vp->frame->linesize, 0, vp->frame->height,
+                                pFrameARGB->data, pFrameARGB->linesize);
+                    }
+
+                    videoDevice->onInitTexture(vp->frame->width, vp->frame->height, FMT_ARGB, BLEND_NONE, vDecoder->getRorate());
+                    ret = videoDevice->onUpdateARGB(pFrameARGB->data[0], pFrameARGB->linesize[0]);
+                    if(ret < 0){
+                        LOGE("update sws rgba failed");
+                        return;
+                    }
                     break;
             }
         }
-        vDecoder->getFrameQueue()->unrefFrame(vp);
-
+    if(videoDevice){
+        videoDevice->onRequestRender(vp->frame->linesize[0] < 0);
+    }
     mMutex.unlock();
 }
 
@@ -258,7 +259,7 @@ double MediaSync::calculateDuration(JFrame *vp, JFrame *nextvp) {
     if(isnan(duration) || duration <= 0 || duration > maxFrameDuration){
         return vp->duration;
     } else{
-        duration;
+        return duration;
     }
 }
 
@@ -266,18 +267,22 @@ double MediaSync::calculateDelay(double delay) {
     double syncThreshold, diff = 0;
     if(playerStatus->syncType != AV_SYNC_VIDEO){
         diff = videoClock->getClock() - getMasterClock();       //计算两个时钟的差值
+        LOGI("video clock %f master clock %f", videoClock->getClock(), getMasterClock());
         //约定delay的值不超过MIN  MAX之间
         syncThreshold = FFMAX(AV_SYNC_THRESHOLD_MIN, FFMIN(delay, AV_SYNC_THRESHOLD_MAX));
         if(!isnan(diff) && fabs(diff) < maxFrameDuration){
             //视频时钟小于主时钟，要减小时延
             if(diff < -syncThreshold){
                 delay = FFMAX(0, delay+diff);
+                LOGI("视频时钟落后");
             //视频时钟大大超过主时钟,增大延时
             } else if(diff >= syncThreshold && delay > AV_SYNC_FRAMEDUP_THRESHOLD){
                 delay = delay + diff;
+                LOGI("视频时钟大大超前");
             //视频时钟超前，增大时延即可
             } else if(diff >= syncThreshold){
                 delay = 2 * delay;
+                LOGI("视频时钟超前");
             }
         }
     }
@@ -297,9 +302,7 @@ void MediaSync::stop() {
     mCond.signal();
     mMutex.unlock();
 
-    if(syncThread == NULL){
-        return;
-    }
+
 
     //为什么要分开写，是因为run中结束后又ext标记
     mMutex.lock();
@@ -308,9 +311,13 @@ void MediaSync::stop() {
     }
     mMutex.unlock();
 
+    if(syncThread == NULL){
+        return;
+    }
     syncThread->join();
     delete syncThread;
     syncThread = NULL;
+    LOGI("同步线程结束");
 }
 
 void MediaSync::setVideoDevice(VideoDevice *device) {
@@ -323,6 +330,7 @@ void MediaSync::setMaxFrameDuration(double time) {
 
 
 void MediaSync::updateAudioColock(double pts, double time) {
+    LOGI("audio clock %f", pts);
     audioClock->setClock(pts, time);
     extClock->syncToSlave(audioClock);
 }
@@ -383,5 +391,29 @@ void MediaSync::start(AudioDecoder *audioDecoder, VideoDecoder *videoDecoder) {
     if(videoDevice && !syncThread){
         syncThread = new Thread(this);
         syncThread->start();
+    }
+}
+
+void MediaSync::reset() {
+    stop();
+    playerStatus = NULL;
+    vDecoder = NULL;
+    aDecoder = NULL;
+    videoDevice = NULL;
+
+    if(pFrameARGB){
+        av_frame_free(&pFrameARGB);
+        av_free(pFrameARGB);
+        pFrameARGB = NULL;
+    }
+
+    if(mBuffer){
+        av_freep(&mBuffer);
+        mBuffer = NULL;
+    }
+
+    if(swsContext){
+        sws_freeContext(swsContext);
+        swsContext = NULL;
     }
 }

@@ -27,6 +27,8 @@ class MediaSync : public Runnable{
 
         void stop();
 
+        void reset();
+
         void start(AudioDecoder* audioDecoder, VideoDecoder* videoDecoder);
 
         void updateAudioColock(double pts, double time);

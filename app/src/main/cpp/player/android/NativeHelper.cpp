@@ -61,6 +61,7 @@ static void nativeSetUp(JNIEnv* env, jobject nheler, jobject jplayer, jobject we
     player = new JMediaPlayer();
     JNIListener* listener = new NativeListener(env, jplayer, weak_jplayer);
     player->setJNIListener(listener);
+    player->init();
 }
 
 static void setVideoUrl(JNIEnv* env, jobject thiz, jstring str){
@@ -113,6 +114,24 @@ static void startPlay(JNIEnv* env, jobject thiz){
     player->startPlay();
 }
 
+static void onPause(JNIEnv* env, jobject thiz){
+    player->onPause();
+}
+
+static void onResume(JNIEnv* env, jobject thiz){
+    player->onResume();
+}
+
+static void onStop(JNIEnv* env, jobject thiz){
+    player->onStop();
+}
+
+
+static void release(JNIEnv* env, jobject thiz){
+    player->release();
+}
+
+
 static void seekVideo(JNIEnv* env, jobject thiz, jfloat time){
     player->seekVideo(time);
 }
@@ -146,6 +165,10 @@ static const JNINativeMethod nativeToJavaMethod[] = {
         {"getVideoWidth","()I", (void*)getVideoWidth},
         {"getVideoHeight", "()I", (void*)getVideoHeight},
         {"getRorate", "()I", (void*)getRorate},
+        {"onPause", "()V", (void*)onPause},
+        {"onResume", "()V", (void*)onResume},
+        {"onStop", "()V", (void*)onStop},
+        {"release", "()V", (void*)release},
         {"seekRequest", "(F)V", (void*)seekVideo},
         {"start", "()V", (void*)startPlay},
         {"setLoop", "(I)V", (void*)setLoop},

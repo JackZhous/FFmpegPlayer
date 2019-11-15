@@ -3,6 +3,8 @@
 //
 
 #include "InputRenderNode.h"
+#include "GLInputFilter.h"
+#include "GLInputRGBAFilter.h"
 
 InputRenderNode::InputRenderNode() : RenderNode(NODE_INPUT) {
     resetVertices();
@@ -16,6 +18,10 @@ void InputRenderNode::initFilter(Texture* texture) {
         if(texture){
             if(texture->format == FMT_YUV420P){
                 glFilter = new GLInputYUV420Filter();
+                LOGI("create yuv filter");
+            } else if(texture->format == FMT_ARGB){
+                glFilter = new GLInutRGBAFilter();
+                LOGI("create rgb filter");
             }
             init();
         }

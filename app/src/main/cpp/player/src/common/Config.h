@@ -33,6 +33,8 @@
 
 #define START_AUDIO_DECODER 12
 
+#define STOP_PLAER 13
+
 #define MIN_FRAMES 25
 
 #define AV_NOSYNC_THRESHOLD 10.0
@@ -41,7 +43,7 @@
 
 #define FFMPEG_INIT_FAILED -1
 
-#define EXIT_PLAYER 5
+#define EXIT_PLAYER 15
 
 #define PLAYER_OK 1
 #define PLAYER_FAILED 0

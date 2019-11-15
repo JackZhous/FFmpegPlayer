@@ -17,6 +17,9 @@ VideoDecoder::VideoDecoder(AVCodecContext *codecCtx, AVStream *stream, int strea
     } else{
         mRorate = 0;
     }
+    LOGI("rorate %d", mRorate);
+    mExit = true;
+    decodeThread = NULL;
 }
 
 VideoDecoder::~VideoDecoder() {
@@ -26,6 +29,7 @@ VideoDecoder::~VideoDecoder() {
     }
 
     if(frameQueue){
+        frameQueue->flush();
         delete frameQueue;
         frameQueue = NULL;
     }
@@ -59,12 +63,14 @@ void VideoDecoder::decode() {
     AVFrame* frame = av_frame_alloc();
     if(!frame){
         playerStatus->queue->addMessage(ALLOC_MEMORY_FAILED, "alloc av frame failed");
+        mExit = true;
         mCond.signal();
         return;
     }
 
     AVPacket* packet = av_packet_alloc();
     if(!packet){
+        mExit = true;
         playerStatus->queue->addMessage(ALLOC_MEMORY_FAILED, "alloc av packet failed");
         mCond.signal();
         return;
@@ -116,30 +122,33 @@ void VideoDecoder::decode() {
 //            }
 //            //宽高比
 //            frame->sample_aspect_ratio = av_guess_sample_aspect_ratio(pForamtCtx, stream, frame);
-//            if(masterClock != NULL){
-//                double pts = NAN;
-//                if(frame->pts != AV_NOPTS_VALUE){
-//                    pts = av_q2d(timebase) * pts;
-//                }
-//
-//                //检查此帧数据是否被丢弃
-//                if(playerStatus->syncType != AV_SYNC_VIDEO){
-//                    if(frame->pts != AV_NOPTS_VALUE){
-//                        double diff = pts - masterClock->getClock();
-//                        //拖拽视频时判断
-//                        if(!isnan(diff) && diff < 0 && fabs(diff) < AV_NOSYNC_THRESHOLD && queue->getPacketLen() > 0){
-//                            gotPicture = 0;
-//                            av_frame_unref(frame);
-//                        }
-//                    }
-//                }
-//            }
+            if(masterClock != NULL){
+                double pts = NAN;
+                if(frame->pts != AV_NOPTS_VALUE){
+                    pts = av_q2d(timebase) * pts;
+                }
+
+                //检查此帧数据是否被丢弃
+                if(playerStatus->syncType != AV_SYNC_VIDEO){
+                    if(frame->pts != AV_NOPTS_VALUE){
+                        double diff = pts - masterClock->getClock();
+                        //拖拽视频时判断
+                        if(!isnan(diff) && diff < 0 && fabs(diff) < AV_NOSYNC_THRESHOLD && queue->getPacketLen() > 0){
+                            gotPicture = 0;
+                            av_frame_unref(frame);
+                        }
+                    }
+                }
+            }
 
         }
         if(gotPicture){
             jFrame = frameQueue->getpushFrame();
-
-            jFrame->pts = frame->pts == AV_NOPTS_VALUE ? 0 : av_q2d(timebase) * frame->pts;
+            if(jFrame == NULL){
+                break;
+            }
+            jFrame->pts = frame->pts == AV_NOPTS_VALUE ? NAN : av_q2d(timebase) * frame->pts;
+            LOGE("vpts %f", jFrame->pts);
             jFrame->frameWidth = frame->width;
             jFrame->frameHeight = frame->height;
             jFrame->format = frame->format;
@@ -155,7 +164,7 @@ void VideoDecoder::decode() {
         av_frame_unref(frame);
         av_packet_unref(packet);
     }
-
+    LOGI("vdeocder logout");
     av_frame_free(&frame);
     av_free(frame);
     frame = NULL;
@@ -163,7 +172,7 @@ void VideoDecoder::decode() {
     av_packet_free(&packet);
     av_free(packet);
     packet = NULL;
-
+    mExit = true;
     mCond.signal();
 }
 
@@ -175,4 +184,34 @@ void VideoDecoder::setMasterClock(MediaClock* clock) {
 int VideoDecoder::getRorate() {
     AutoMutex lock(mMutex);
     return mRorate;
+}
+
+void VideoDecoder::stop() {
+    MediaDecoder::stop();
+    if(frameQueue){
+        frameQueue->stop();
+    }
+    mMutex.lock();
+    while (!mExit){
+        mCond.wait(mMutex);
+    }
+    mMutex.unlock();
+    if(decodeThread){
+        decodeThread->join();
+        delete decodeThread;
+        decodeThread = NULL;
+    }
+    LOGI("视频解码线程结束");
+}
+
+void VideoDecoder::start() {
+    MediaDecoder::start();
+    if(frameQueue){
+        frameQueue->start();
+    }
+    if(!decodeThread){
+        decodeThread = new Thread(this);
+        decodeThread->start();
+        mExit = false;
+    }
 }

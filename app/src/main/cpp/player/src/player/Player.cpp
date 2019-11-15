@@ -16,8 +16,9 @@ Player::Player() {
     pFormatCtx = NULL;
     audioResampler = NULL;
     aDevice = new AudioDevice();
-    vDevice = new VideoDevice();
     eof = 0;
+    mExit = true;
+    readPacketThread = NULL;
 }
 
 
@@ -34,7 +35,12 @@ void Player::init() {
     sync = new MediaSync(playerStatus);
 }
 
+void Player::setVideoDevice(VideoDevice *device) {
+    this->vDevice = device;
+}
+
 void Player::reset() {
+    stop();
     if(aDecoder != NULL){
         aDecoder->stop();
         delete aDecoder;
@@ -48,7 +54,7 @@ void Player::reset() {
     }
 
     if(sync != NULL){
-        sync->stop();
+        sync->reset();
         delete sync;
         sync = NULL;
     }
@@ -64,11 +70,6 @@ void Player::reset() {
     if(audioResampler != NULL){
         delete audioResampler;
         audioResampler = NULL;
-    }
-
-    if(vDevice){
-        delete vDevice;
-        vDevice = NULL;
     }
 
     eof = 0;
@@ -90,22 +91,6 @@ void Player::setVideoPath(char *path) {
     playerStatus->queue->addMessage(SET_VIDEO_DATA, "set video path");
 }
 
-void Player::setSurface(ANativeWindow *window) {
-
-    if(window == NULL){
-        return;
-    }
-
-    if(vDevice){
-        vDevice->surfaceCreate(window);
-    }
-}
-
-void Player::prepareDevice() {
-    if(!vDevice){
-        vDevice = new VideoDevice();
-    }
-}
 
 static int ffmpeg_open_input_callback(void *pointer) {
     PlayerStatus* status = (PlayerStatus*)pointer;
@@ -133,9 +118,14 @@ int Player::getRorate() {
 }
 
 void Player::prepare() {
+    AutoMutex lock(mMutex);
     playerStatus->abortRequest = 0;
-    Thread* thread = new Thread(this);
-    thread->start();
+    if(!readPacketThread){
+        readPacketThread = new Thread(this);
+        readPacketThread->start();
+
+        LOGI("read Packet Thread start");
+    }
 }
 
 
@@ -143,7 +133,37 @@ void Player::startPlay() {
     AutoMutex lock(mMutex);
     playerStatus->abortRequest = 0;
     playerStatus->pauseRequest = 0;
+    mExit = false;
     mCond.signal();
+}
+
+void Player::pause() {
+    AutoMutex lock(mMutex);
+    playerStatus->pauseRequest = 1;
+    mCond.signal();
+}
+
+void Player::onResume() {
+    AutoMutex lock(mMutex);
+    playerStatus->pauseRequest = 0;
+    mCond.signal();
+}
+
+void Player::stop() {
+    mMutex.lock();
+    playerStatus->abortRequest = 1;
+    mCond.signal();
+
+    while (!mExit){
+        mCond.wait(mMutex);
+    }
+    mMutex.unlock();
+    if(readPacketThread){
+        readPacketThread->join();
+        delete readPacketThread;
+        readPacketThread = NULL;
+    }
+    LOGI("读取ffmpeg线程结束");
 }
 
 /**
@@ -328,10 +348,8 @@ void Player::run() {
      */
 
     if(vDecoder != NULL && aDecoder != NULL){
-        Thread* vThread = new Thread(vDecoder);
-//        Thread* aThread = new Thread(aDecoder);
-        vThread->start();
-//        aThread->start();
+        vDecoder->start();
+        aDecoder->start();
         playerStatus->queue->addMessage(START_VIDEO_DECODER, "start video decoder thread");
         playerStatus->queue->addMessage(START_AUDIO_DECODER, "start audio decoder thread");
     }
@@ -349,7 +367,7 @@ void Player::run() {
                 }
             }
         } else{
-//            aDevice->start();
+            aDevice->start();
         }
     }
 
@@ -368,10 +386,9 @@ void Player::run() {
         sync->setVideoDevice(vDevice);
         sync->start(aDecoder, vDecoder);
     }
-
-    while (!playerStatus->abortRequest && playerStatus->pauseRequest){
+    //卡主  等到java重新设置surface大小
+    while (mExit){
         av_usleep(10 * 1000);
-        LOGI("sleeping");
     }
 
     LOGI("prepare ffmpeg!");
@@ -446,6 +463,7 @@ void Player::run() {
             }
 
             if(pFormatCtx->pb->error){
+                printError("read packet", pFormatCtx->pb->error);
                 LOGE("read packet error!");
                 break;
             }
@@ -468,7 +486,7 @@ void Player::run() {
         if(pktIndex == vDecoder->getStreamIndex()){
             vDecoder->getPacketQueue()->pushPacket(&packet);
         } else if(pktIndex == aDecoder->getStreamIndex()){
-//            aDecoder->getPacketQueue()->pushPacket(&packet);
+            aDecoder->getPacketQueue()->pushPacket(&packet);
 
         } else{
             av_packet_unref(&packet);
@@ -483,9 +501,16 @@ void Player::run() {
         vDecoder->stop();
     }
 
+    if(aDevice != NULL){
+        aDevice->stop();
+    }
+
     if(sync != NULL){
         sync->stop();
     }
+    mExit = true;
+    mCond.signal();
+    playerStatus->queue->addMessage(STOP_PLAER, "player stoped");
 }
 
 /**
@@ -522,9 +547,9 @@ void Player::pcmQueueCallback(uint8_t *stream, int len) {
         return;
     }
     audioResampler->pcmQueueCallback(stream, len);
-    if(playerStatus->queue && playerStatus->syncType != AV_SYNC_VIDEO){
-        playerStatus->queue->addMessage(MSG_CURRENT_POSITON, "player is prepared!");
-    }
+//    if(playerStatus->queue && playerStatus->syncType != AV_SYNC_VIDEO){
+//        playerStatus->queue->addMessage(MSG_CURRENT_POSITON, "audio callback is prepared!");
+//    }
 }
 
 int Player::openAudioDevice(int64_t wanted_channel_layout, int wanted_nb_channels,

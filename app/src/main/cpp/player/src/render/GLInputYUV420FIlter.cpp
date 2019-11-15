@@ -23,9 +23,9 @@ void GLInputYUV420Filter::initProgram(const char *vertexShader, const char *frag
         OpenGLHelper::checkError("createProgram");
         vertextHanlde = glGetAttribLocation(programHandle, "aPosition");
         textureHandle = glGetAttribLocation(programHandle, "aTextureCoord");        //这个是纹理坐标绑定
-        inputTextureHandle[0] = glGetAttribLocation(programHandle, "inputTextureY");
-        inputTextureHandle[1] = glGetAttribLocation(programHandle, "inputTextureU");
-        inputTextureHandle[2] = glGetAttribLocation(programHandle, "inputTextureV");
+        inputTextureHandle[0] = glGetUniformLocation(programHandle, "inputTextureY");
+        inputTextureHandle[1] = glGetUniformLocation(programHandle, "inputTextureU");
+        inputTextureHandle[2] = glGetUniformLocation(programHandle, "inputTextureV");
 
         // 需要设置4字节对齐
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -45,9 +45,8 @@ void GLInputYUV420Filter::initProgram(const char *vertexShader, const char *frag
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             //纹理颜色选择器绑定纹理，最后选择器根据纹理坐标到相应的纹理中选取颜色
             glUniform1i(inputTextureHandle[i], i);
-            setInitialized(true);
         }
-
+        setInitialized(true);
     } else{
         programHandle = -1;
         vertextHanlde = -1;

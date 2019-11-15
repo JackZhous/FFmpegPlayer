@@ -249,7 +249,6 @@ void AudioDevice::run() {
         mMutex.lock();
         if(!abortRequest && (pauseRequest || slState.count >= OPENSLES_BUFFERS)){
             while (!abortRequest && (pauseRequest || slState.count >= OPENSLES_BUFFERS)){
-                LOGI("sl es 音频缓冲区判断中");
                 if(!pauseRequest){
                     (*slPlayItf)->SetPlayState(slPlayItf, SL_PLAYSTATE_PLAYING);
                 }
@@ -269,7 +268,6 @@ void AudioDevice::run() {
                 (*slPlayItf)->SetPlayState(slPlayItf, SL_PLAYSTATE_PLAYING);
             }
         }
-        LOGI("sl es 音频缓冲区需要填充数据了");
         if(flushRequest){
             (*slBufferQueueItf)->Clear(slBufferQueueItf);
             flushRequest = 0;
@@ -279,7 +277,6 @@ void AudioDevice::run() {
         //缓冲区数据填充
         mMutex.lock();
         if(audioDeviceSpec.callback != NULL){
-            LOGI("sl es 音频开始回调数据");
             nextBuffer = buffer + nextBufferIndex * bytes_per_buffer;
             nextBufferIndex = (nextBufferIndex+1) % OPENSLES_BUFFERS;
             audioDeviceSpec.callback(audioDeviceSpec.userData, nextBuffer, bytes_per_buffer);

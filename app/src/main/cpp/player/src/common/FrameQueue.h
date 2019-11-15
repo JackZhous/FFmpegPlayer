@@ -1,6 +1,12 @@
 //
 // Created by jackzhous on 2019/8/16.
-//
+/**
+ * 此队列比较复杂，需求如下：
+ * 1. 队列基本功能，一边进，一边出，队列有最大现在max
+ * 2. 队列元素为自定义结构体JFrame，包含了图像的解码帧数据
+ * 3. 使用完后的不需要的图像帧要unref释放掉，记住是不需要的
+ * 4. 图像刷新线程，需要参考上一帧、当前帧以及下一帧数据，所以不要盲目unref图像数据
+ */
 //FrameQueue 存放解码后的视频帧
 #ifndef MYPLAYER_FRAMEQUEUE_H
 #define MYPLAYER_FRAMEQUEUE_H
@@ -45,7 +51,10 @@ public:
     JFrame* getCurrentFrame();
     JFrame* getNextFrame();
     void unrefFrame(JFrame* frame);     //释放frame
-
+    void start();
+    void stop();
+    void startRender();
+    void finishRender();
 
 private:
     int queueMax;                   //总容量
@@ -55,6 +64,8 @@ private:
     short abort;
     Mutex mMutex;
     Condition mCond;
+    bool exit;
+    int finishFlag = 0;
 };
 
 #endif //MYPLAYER_FRAMEQUEUE_H

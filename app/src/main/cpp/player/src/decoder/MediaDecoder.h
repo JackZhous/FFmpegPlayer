@@ -29,7 +29,8 @@ class MediaDecoder : public Runnable{
         int getMemorySize();
         bool hasEnoughPackets();
         virtual void flush();
-        void stop();
+        virtual void stop();
+        virtual void start();
 
 
     protected:

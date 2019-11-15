@@ -6,6 +6,7 @@
 PlayerStatus::PlayerStatus() {
     reset();
     queue = new MessageQueue();
+    syncType = AV_SYNC_AUDIO;
 }
 
 PlayerStatus::~PlayerStatus() {
@@ -36,4 +37,5 @@ void PlayerStatus::reset() {
     start_time = AV_NOPTS_VALUE;
     mute = 0;
     loop = 0;
+    syncType = AV_SYNC_AUDIO;
 }

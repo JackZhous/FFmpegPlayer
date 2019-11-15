@@ -71,7 +71,6 @@ int MessageQueue::addMessage(int what, const char* str) {
     }
     last->next = NULL;
     size++;
-    LOGI("来了一个");
     mCond.signal();
     return 0;
 }

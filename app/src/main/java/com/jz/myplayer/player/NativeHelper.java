@@ -56,4 +56,12 @@ public class NativeHelper {
     public native void setVideoSurface(Surface surface);
 
     public native void start();
+
+    public native void onPause();
+
+    public native void onResume();
+
+    public native void onStop();
+
+    public native void release();
 }
