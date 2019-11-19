@@ -58,9 +58,8 @@ void MediaSync::run() {
             }
             break;
         }
-
         if(remaining_time > 0.0){
-            av_usleep(remaining_time * 1000000.0);
+            av_usleep((int64_t)(remaining_time * 1000000.0));
         }
 
         remaining_time = REFRESH_RATE;
@@ -242,6 +241,7 @@ void MediaSync::renderVideo() {
                     ret = videoDevice->onUpdateARGB(pFrameARGB->data[0], pFrameARGB->linesize[0]);
                     if(ret < 0){
                         LOGE("update sws rgba failed");
+                        mMutex.unlock();
                         return;
                     }
                     break;
@@ -330,7 +330,6 @@ void MediaSync::setMaxFrameDuration(double time) {
 
 
 void MediaSync::updateAudioColock(double pts, double time) {
-    LOGI("audio clock %f", pts);
     audioClock->setClock(pts, time);
     extClock->syncToSlave(audioClock);
 }

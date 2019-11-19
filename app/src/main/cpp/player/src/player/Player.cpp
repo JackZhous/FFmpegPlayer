@@ -346,7 +346,7 @@ void Player::run() {
      * 3. 准备音视频解码线程
      * 4. 音视频同步启动
      */
-
+    //开启音视频解码线程
     if(vDecoder != NULL && aDecoder != NULL){
         vDecoder->start();
         aDecoder->start();
@@ -354,6 +354,7 @@ void Player::run() {
         playerStatus->queue->addMessage(START_AUDIO_DECODER, "start audio decoder thread");
     }
 
+    //打开音频设备
     if(aDecoder){
         AVCodecContext* ctx = aDecoder->getCodecCtx();
         ret = openAudioDevice(ctx->channel_layout, ctx->channels, ctx->sample_rate);

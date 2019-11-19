@@ -27,7 +27,6 @@ void FrameQueue::flush() {
     mMutex.lock();
     while (size > 0){
         av_frame_unref(frame[outputIndex % 8].frame);
-//        avsubtitle_free(&(frame[outputIndex].sub));
         size--;
         outputIndex++;
         if(outputIndex >= queueMax){
@@ -70,7 +69,11 @@ JFrame* FrameQueue::getCurrentFrame() {
  */
 JFrame* FrameQueue::getLastFrame() {
 //    LOGI("出兑index %d", outputIndex-1);
-    return &frame[outputIndex-1];
+    JFrame* jf = &frame[outputIndex-1];
+    if(jf->frame == NULL){
+        return &frame[outputIndex];
+    }
+    return jf;
 }
 
 JFrame* FrameQueue::getNextFrame() {
