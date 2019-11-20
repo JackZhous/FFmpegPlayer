@@ -3,6 +3,7 @@
 //
 
 #include "GLInputYUV420Filter.h"
+#include "GLInputFilter.h"
 
 GLInputYUV420Filter::GLInputYUV420Filter() {
     for(int i = 0; i < GLES_MAX_PLANE; i++){
@@ -61,6 +62,7 @@ GLboolean GLInputYUV420Filter::uploadTexture(Texture *texture) {
 
     //更新绑定纹理数据
     const GLsizei heights[3] = {texture->height, texture->height / 2, texture->height / 2};
+//    LOGI("glPixel ylen %d ulen %d ydatalen %d", texture->pitches[0], texture->pitches[1], sizeof(texture->pixels[0]));
     for (int i = 0; i < 3; ++i) {
         glActiveTexture(GL_TEXTURE0 + i);   //激活纹理目标
         glBindTexture(GL_TEXTURE_2D, this->texture[i]);           //绑定纹理单元

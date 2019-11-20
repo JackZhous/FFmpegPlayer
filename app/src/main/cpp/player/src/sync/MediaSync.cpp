@@ -116,7 +116,6 @@ void MediaSync::refreshVideo(double *remain_time) {
             }
 
             time = av_gettime_relative() / 1000000.0;
-            LOGI("framer time %f, current time %f delay %f", frameTimer, time, delay);
             if(isnan(frameTimer) || time < frameTimer){
                 frameTimer = time;
             }
@@ -180,7 +179,6 @@ void MediaSync::renderVideo() {
         //虽然是last，但是上一个函数pop一次，就是当前帧
         JFrame* vp = vDecoder->getFrameQueue()->getLastFrame();
         int ret = 0;
-//        LOGE("format %d  upload %d" , vp->frame->format, vp->upload);
         if(!vp->upload){
             vp->upload = 1;
             switch (vp->frame->format){
@@ -190,7 +188,7 @@ void MediaSync::renderVideo() {
 
                 case AV_PIX_FMT_YUV420P:
                 case AV_PIX_FMT_YUVJ420P:
-                    videoDevice->onInitTexture(vp->frame->width, vp->frame->height, FMT_YUV420P, BLEND_NONE);
+                    videoDevice->onInitTexture(vp->frame->width, vp->frame->height, FMT_YUV420P, BLEND_NONE, vDecoder->getRorate());
                     //linesize即平面长度 YUV三个通过平面存储
                     if(vp->frame->linesize[0] < 0 || vp->frame->linesize[1] < 0 || vp->frame->linesize[2] < 0){
                         LOGE("negative linesize is not supported for YUV");
@@ -267,22 +265,18 @@ double MediaSync::calculateDelay(double delay) {
     double syncThreshold, diff = 0;
     if(playerStatus->syncType != AV_SYNC_VIDEO){
         diff = videoClock->getClock() - getMasterClock();       //计算两个时钟的差值
-        LOGI("video clock %f master clock %f", videoClock->getClock(), getMasterClock());
         //约定delay的值不超过MIN  MAX之间
         syncThreshold = FFMAX(AV_SYNC_THRESHOLD_MIN, FFMIN(delay, AV_SYNC_THRESHOLD_MAX));
         if(!isnan(diff) && fabs(diff) < maxFrameDuration){
             //视频时钟小于主时钟，要减小时延
             if(diff < -syncThreshold){
                 delay = FFMAX(0, delay+diff);
-                LOGI("视频时钟落后");
             //视频时钟大大超过主时钟,增大延时
             } else if(diff >= syncThreshold && delay > AV_SYNC_FRAMEDUP_THRESHOLD){
                 delay = delay + diff;
-                LOGI("视频时钟大大超前");
             //视频时钟超前，增大时延即可
             } else if(diff >= syncThreshold){
                 delay = 2 * delay;
-                LOGI("视频时钟超前");
             }
         }
     }

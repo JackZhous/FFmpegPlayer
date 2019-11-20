@@ -33,7 +33,7 @@ void MediaClock::init() {
 }
 
 void MediaClock::setClock(double pts) {
-    double time = av_gettime_relative() / 1000000;
+    double time = av_gettime_relative() / 1000000.0;
     setClock(pts, time);
 }
 
